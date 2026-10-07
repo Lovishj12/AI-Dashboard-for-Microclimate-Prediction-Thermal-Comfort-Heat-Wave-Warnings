@@ -1,0 +1,88 @@
+{
+  "location": "kharagpur",
+  "horizon_hours": 24,
+  "champion": "Ridge",
+  "comparison": {
+    "Ridge": {
+      "MAE_T": 0.944,
+      "RMSE_T": 1.301,
+      "R2_T": 0.9315,
+      "MAE_HI": 1.564,
+      "RMSE_HI": 2.072,
+      "Extreme_MAE_T": 1.414,
+      "Extreme_MAE_HI": 1.726,
+      "Danger_Precision": 0.8725,
+      "Danger_Recall": 0.7867,
+      "Danger_F1": 0.8274,
+      "Confusion_Matrix": [
+        [
+          1423,
+          76
+        ],
+        [
+          141,
+          520
+        ]
+      ]
+    },
+    "RandomForest": {
+      "MAE_T": 1.033,
+      "RMSE_T": 1.414,
+      "R2_T": 0.9191,
+      "MAE_HI": 1.735,
+      "RMSE_HI": 2.271,
+      "Extreme_MAE_T": 1.487,
+      "Extreme_MAE_HI": 1.814,
+      "Danger_Precision": 0.86,
+      "Danger_Recall": 0.7716,
+      "Danger_F1": 0.8134,
+      "Confusion_Matrix": [
+        [
+          1416,
+          83
+        ],
+        [
+          151,
+          510
+        ]
+      ]
+    },
+    "HistGradientBoosting": {
+      "MAE_T": 1.047,
+      "RMSE_T": 1.435,
+      "R2_T": 0.9166,
+      "MAE_HI": 1.755,
+      "RMSE_HI": 2.281,
+      "Extreme_MAE_T": 1.334,
+      "Extreme_MAE_HI": 1.663,
+      "Danger_Precision": 0.8496,
+      "Danger_Recall": 0.7519,
+      "Danger_F1": 0.7978,
+      "Confusion_Matrix": [
+        [
+          1411,
+          88
+        ],
+        [
+          164,
+          497
+        ]
+      ]
+    }
+  },
+  "top_features": {
+    "temperature_c": 0.9666073801543548,
+    "heat_index_c": 0.004657292329342373,
+    "temp_lag_24": 0.002325196992212389,
+    "temp_diff_24h": 0.0017613930103744988,
+    "temp_roll_std_24": 0.001274033312606995,
+    "rh_roll_mean_24": 0.001233248652087293,
+    "wind_lag_1": 0.0011108668133414546,
+    "wind_lag_24": 0.0010898643441792375,
+    "wind_speed_ms": 0.000975785476362548,
+    "wind_lag_3": 0.0009183883398759787
+  },
+  "champion_artifact_path": "models\\champion\\kharagpur_champion_h24.joblib",
+  "comparison_plot_path": "reports\\ml\\kharagpur_h24_model_comparison.png",
+  "feature_importance_plot_path": "reports\\ml\\kharagpur_h24_feature_importance.png"
+}

@@ -1,0 +1,46 @@
+{
+  "location": "ahmedabad",
+  "horizon_hours": 6,
+  "train_samples": 8735,
+  "test_samples": 2160,
+  "metrics": {
+    "temperature": {
+      "naive_persistence": {
+        "MAE": 6.306,
+        "RMSE": 7.293,
+        "R2": -0.7264
+      },
+      "seasonal_diurnal": {
+        "MAE": 6.378,
+        "RMSE": 7.404,
+        "R2": -0.7796
+      },
+      "baseline_ridge": {
+        "MAE": 1.042,
+        "RMSE": 1.395,
+        "R2": 0.9368
+      }
+    },
+    "relative_humidity": {
+      "baseline_ridge": {
+        "MAE": 5.231,
+        "RMSE": 6.734,
+        "R2": 0.8716
+      }
+    },
+    "heat_index": {
+      "naive_persistence": {
+        "MAE": 5.63,
+        "RMSE": 6.548,
+        "R2": -0.2354
+      },
+      "baseline_ridge": {
+        "MAE": 1.481,
+        "RMSE": 1.955,
+        "R2": 0.8899
+      }
+    }
+  },
+  "plot_path": "reports\\ml\\ahmedabad_baseline_h6_forecast_eval.png",
+  "model_artifact": "models\\baseline\\ahmedabad_baseline_ridge_h6.joblib"
+}

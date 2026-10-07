@@ -1,0 +1,88 @@
+{
+  "location": "new_delhi",
+  "horizon_hours": 24,
+  "champion": "Ridge",
+  "comparison": {
+    "Ridge": {
+      "MAE_T": 1.401,
+      "RMSE_T": 1.729,
+      "R2_T": 0.9317,
+      "MAE_HI": 1.305,
+      "RMSE_HI": 1.678,
+      "Extreme_MAE_T": 1.644,
+      "Extreme_MAE_HI": 1.289,
+      "Danger_Precision": 0.9362,
+      "Danger_Recall": 0.8705,
+      "Danger_F1": 0.9021,
+      "Confusion_Matrix": [
+        [
+          1571,
+          33
+        ],
+        [
+          72,
+          484
+        ]
+      ]
+    },
+    "RandomForest": {
+      "MAE_T": 1.815,
+      "RMSE_T": 2.32,
+      "R2_T": 0.877,
+      "MAE_HI": 1.731,
+      "RMSE_HI": 2.276,
+      "Extreme_MAE_T": 2.727,
+      "Extreme_MAE_HI": 2.321,
+      "Danger_Precision": 0.8918,
+      "Danger_Recall": 0.8597,
+      "Danger_F1": 0.8755,
+      "Confusion_Matrix": [
+        [
+          1546,
+          58
+        ],
+        [
+          78,
+          478
+        ]
+      ]
+    },
+    "HistGradientBoosting": {
+      "MAE_T": 1.784,
+      "RMSE_T": 2.319,
+      "R2_T": 0.8772,
+      "MAE_HI": 1.672,
+      "RMSE_HI": 2.152,
+      "Extreme_MAE_T": 2.887,
+      "Extreme_MAE_HI": 2.014,
+      "Danger_Precision": 0.8409,
+      "Danger_Recall": 0.8651,
+      "Danger_F1": 0.8528,
+      "Confusion_Matrix": [
+        [
+          1513,
+          91
+        ],
+        [
+          75,
+          481
+        ]
+      ]
+    }
+  },
+  "top_features": {
+    "temperature_c": 0.9258759940071414,
+    "heat_index_c": 0.02929648742955238,
+    "temp_lag_24": 0.003368278314532594,
+    "temp_diff_24h": 0.0024580308404630177,
+    "temp_roll_std_24": 0.0023382493054331004,
+    "rh_roll_mean_24": 0.0022916208441979107,
+    "wind_speed_ms": 0.00221070283588583,
+    "rh_lag_24": 0.001844113177389603,
+    "wind_lag_24": 0.0015395644525348683,
+    "wind_lag_1": 0.0015316577730369015
+  },
+  "champion_artifact_path": "models\\champion\\new_delhi_champion_h24.joblib",
+  "comparison_plot_path": "reports\\ml\\new_delhi_h24_model_comparison.png",
+  "feature_importance_plot_path": "reports\\ml\\new_delhi_h24_feature_importance.png"
+}

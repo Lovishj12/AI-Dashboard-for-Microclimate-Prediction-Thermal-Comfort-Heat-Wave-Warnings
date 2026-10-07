@@ -1,0 +1,4 @@
+location,records,missing,max_t,min_t,hours_ge_40c,hours_ge_45c
+new_delhi,13128,0,48.5,0.45,685,166
+kharagpur,13128,0,46.75,6.45,400,13
+ahmedabad,13128,0,47.44,6.72,730,60

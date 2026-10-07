@@ -1,0 +1,88 @@
+{
+  "location": "kharagpur",
+  "horizon_hours": 1,
+  "champion": "HistGradientBoosting",
+  "comparison": {
+    "Ridge": {
+      "MAE_T": 0.313,
+      "RMSE_T": 0.425,
+      "R2_T": 0.9927,
+      "MAE_HI": 0.504,
+      "RMSE_HI": 0.671,
+      "Extreme_MAE_T": 0.446,
+      "Extreme_MAE_HI": 0.606,
+      "Danger_Precision": 0.934,
+      "Danger_Recall": 0.9579,
+      "Danger_F1": 0.9458,
+      "Confusion_Matrix": [
+        [
+          1473,
+          45
+        ],
+        [
+          28,
+          637
+        ]
+      ]
+    },
+    "RandomForest": {
+      "MAE_T": 0.3,
+      "RMSE_T": 0.44,
+      "R2_T": 0.9922,
+      "MAE_HI": 0.554,
+      "RMSE_HI": 0.776,
+      "Extreme_MAE_T": 0.43,
+      "Extreme_MAE_HI": 0.584,
+      "Danger_Precision": 0.9311,
+      "Danger_Recall": 0.9353,
+      "Danger_F1": 0.9332,
+      "Confusion_Matrix": [
+        [
+          1472,
+          46
+        ],
+        [
+          43,
+          622
+        ]
+      ]
+    },
+    "HistGradientBoosting": {
+      "MAE_T": 0.291,
+      "RMSE_T": 0.417,
+      "R2_T": 0.993,
+      "MAE_HI": 0.558,
+      "RMSE_HI": 0.776,
+      "Extreme_MAE_T": 0.485,
+      "Extreme_MAE_HI": 0.749,
+      "Danger_Precision": 0.9314,
+      "Danger_Recall": 0.9398,
+      "Danger_F1": 0.9356,
+      "Confusion_Matrix": [
+        [
+          1472,
+          46
+        ],
+        [
+          40,
+          625
+        ]
+      ]
+    }
+  },
+  "top_features": {
+    "temperature_c": 0.9212468536745118,
+    "heat_index_c": 0.04479999651380009,
+    "temp_diff_1h": 0.007350505285540644,
+    "rh_diff_1h": 0.0040786663548727925,
+    "hour_sin": 0.0028451052057061744,
+    "temp_lag_2": 0.0025483850300062625,
+    "solar_radiation_wm2": 0.0023820983381948164,
+    "temp_roll_max_24": 0.002298927848554948,
+    "solar_lag_24": 0.0020257766945608394,
+    "solar_lag_6": 0.0013508158571114528
+  },
+  "champion_artifact_path": "models\\champion\\kharagpur_champion_h1.joblib",
+  "comparison_plot_path": "reports\\ml\\kharagpur_h1_model_comparison.png",
+  "feature_importance_plot_path": "reports\\ml\\kharagpur_h1_feature_importance.png"
+}

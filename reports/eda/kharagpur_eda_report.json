@@ -1,0 +1,114 @@
+{
+  "location": "kharagpur",
+  "total_records": 13128,
+  "start_time": "2023-01-01 00:00:00",
+  "end_time": "2024-06-30 23:00:00",
+  "expected_hours": 13128,
+  "missing_timestamps": 0,
+  "duplicate_timestamps": 0,
+  "missing_per_column": {
+    "temperature_c": 0,
+    "relative_humidity_pct": 0,
+    "wind_speed_ms": 0,
+    "PS": 0,
+    "solar_radiation_wm2": 0,
+    "surface_pressure_hpa": 0,
+    "location": 0,
+    "latitude": 0,
+    "longitude": 0
+  },
+  "max_temperature_c": 46.75,
+  "min_temperature_c": 6.45,
+  "hours_above_40c": 400,
+  "hours_above_45c": 13,
+  "descriptive_statistics": {
+    "temperature_c": {
+      "count": 13128.0,
+      "mean": 26.33,
+      "std": 7.21,
+      "min": 6.45,
+      "25%": 21.67,
+      "50%": 27.13,
+      "75%": 30.73,
+      "max": 46.75
+    },
+    "relative_humidity_pct": {
+      "count": 13128.0,
+      "mean": 68.97,
+      "std": 22.69,
+      "min": 6.93,
+      "25%": 52.86,
+      "50%": 73.76,
+      "75%": 88.27,
+      "max": 100.0
+    },
+    "wind_speed_ms": {
+      "count": 13128.0,
+      "mean": 1.99,
+      "std": 1.18,
+      "min": 0.04,
+      "25%": 1.08,
+      "50%": 1.68,
+      "75%": 2.67,
+      "max": 10.08
+    },
+    "surface_pressure_hpa": {
+      "count": 13128.0,
+      "mean": 1005.64,
+      "std": 6.42,
+      "min": 984.3,
+      "25%": 1000.2,
+      "50%": 1005.8,
+      "75%": 1011.2,
+      "max": 1020.0
+    },
+    "solar_radiation_wm2": {
+      "count": 13128.0,
+      "mean": 188.06,
+      "std": 261.19,
+      "min": 0.0,
+      "25%": 0.0,
+      "50%": 6.61,
+      "75%": 358.32,
+      "max": 990.8
+    }
+  },
+  "correlation_matrix": {
+    "temperature_c": {
+      "temperature_c": 1.0,
+      "relative_humidity_pct": -0.577,
+      "wind_speed_ms": 0.342,
+      "surface_pressure_hpa": -0.682,
+      "solar_radiation_wm2": 0.538
+    },
+    "relative_humidity_pct": {
+      "temperature_c": -0.577,
+      "relative_humidity_pct": 1.0,
+      "wind_speed_ms": -0.078,
+      "surface_pressure_hpa": -0.01,
+      "solar_radiation_wm2": -0.653
+    },
+    "wind_speed_ms": {
+      "temperature_c": 0.342,
+      "relative_humidity_pct": -0.078,
+      "wind_speed_ms": 1.0,
+      "surface_pressure_hpa": -0.427,
+      "solar_radiation_wm2": 0.242
+    },
+    "surface_pressure_hpa": {
+      "temperature_c": -0.682,
+      "relative_humidity_pct": -0.01,
+      "wind_speed_ms": -0.427,
+      "surface_pressure_hpa": 1.0,
+      "solar_radiation_wm2": -0.02
+    },
+    "solar_radiation_wm2": {
+      "temperature_c": 0.538,
+      "relative_humidity_pct": -0.653,
+      "wind_speed_ms": 0.242,
+      "surface_pressure_hpa": -0.02,
+      "solar_radiation_wm2": 1.0
+    }
+  },
+  "eda_plot_path": "reports\\eda\\kharagpur_eda_overview.png"
+}

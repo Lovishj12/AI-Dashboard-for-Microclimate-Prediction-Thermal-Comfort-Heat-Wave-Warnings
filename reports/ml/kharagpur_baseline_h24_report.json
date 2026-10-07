@@ -1,0 +1,46 @@
+{
+  "location": "kharagpur",
+  "horizon_hours": 24,
+  "train_samples": 8735,
+  "test_samples": 2160,
+  "metrics": {
+    "temperature": {
+      "naive_persistence": {
+        "MAE": 0.975,
+        "RMSE": 1.362,
+        "R2": 0.9248
+      },
+      "seasonal_diurnal": {
+        "MAE": 1.223,
+        "RMSE": 1.695,
+        "R2": 0.8836
+      },
+      "baseline_ridge": {
+        "MAE": 0.944,
+        "RMSE": 1.301,
+        "R2": 0.9315
+      }
+    },
+    "relative_humidity": {
+      "baseline_ridge": {
+        "MAE": 5.947,
+        "RMSE": 8.254,
+        "R2": 0.8892
+      }
+    },
+    "heat_index": {
+      "naive_persistence": {
+        "MAE": 1.607,
+        "RMSE": 2.173,
+        "R2": 0.8233
+      },
+      "baseline_ridge": {
+        "MAE": 1.564,
+        "RMSE": 2.072,
+        "R2": 0.8394
+      }
+    }
+  },
+  "plot_path": "reports\\ml\\kharagpur_baseline_h24_forecast_eval.png",
+  "model_artifact": "models\\baseline\\kharagpur_baseline_ridge_h24.joblib"
+}

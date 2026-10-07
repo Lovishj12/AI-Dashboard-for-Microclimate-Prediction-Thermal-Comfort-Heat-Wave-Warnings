@@ -1,0 +1,114 @@
+{
+  "location": "new_delhi",
+  "total_records": 13128,
+  "start_time": "2023-01-01 00:00:00",
+  "end_time": "2024-06-30 23:00:00",
+  "expected_hours": 13128,
+  "missing_timestamps": 0,
+  "duplicate_timestamps": 0,
+  "missing_per_column": {
+    "temperature_c": 0,
+    "relative_humidity_pct": 0,
+    "wind_speed_ms": 0,
+    "PS": 0,
+    "solar_radiation_wm2": 0,
+    "surface_pressure_hpa": 0,
+    "location": 0,
+    "latitude": 0,
+    "longitude": 0
+  },
+  "max_temperature_c": 48.5,
+  "min_temperature_c": 0.45,
+  "hours_above_40c": 685,
+  "hours_above_45c": 166,
+  "descriptive_statistics": {
+    "temperature_c": {
+      "count": 13128.0,
+      "mean": 25.18,
+      "std": 9.35,
+      "min": 0.45,
+      "25%": 18.4,
+      "50%": 26.01,
+      "75%": 31.93,
+      "max": 48.5
+    },
+    "relative_humidity_pct": {
+      "count": 13128.0,
+      "mean": 47.61,
+      "std": 23.69,
+      "min": 5.06,
+      "25%": 28.28,
+      "50%": 45.37,
+      "75%": 64.52,
+      "max": 100.0
+    },
+    "wind_speed_ms": {
+      "count": 13128.0,
+      "mean": 1.93,
+      "std": 1.21,
+      "min": 0.06,
+      "25%": 1.1,
+      "50%": 1.53,
+      "75%": 2.53,
+      "max": 8.68
+    },
+    "surface_pressure_hpa": {
+      "count": 13128.0,
+      "mean": 985.12,
+      "std": 6.89,
+      "min": 966.7,
+      "25%": 979.3,
+      "50%": 985.1,
+      "75%": 991.3,
+      "max": 1001.3
+    },
+    "solar_radiation_wm2": {
+      "count": 13128.0,
+      "mean": 201.07,
+      "std": 278.29,
+      "min": 0.0,
+      "25%": 0.0,
+      "50%": 9.61,
+      "75%": 376.02,
+      "max": 1020.08
+    }
+  },
+  "correlation_matrix": {
+    "temperature_c": {
+      "temperature_c": 1.0,
+      "relative_humidity_pct": -0.416,
+      "wind_speed_ms": 0.442,
+      "surface_pressure_hpa": -0.756,
+      "solar_radiation_wm2": 0.545
+    },
+    "relative_humidity_pct": {
+      "temperature_c": -0.416,
+      "relative_humidity_pct": 1.0,
+      "wind_speed_ms": -0.355,
+      "surface_pressure_hpa": -0.029,
+      "solar_radiation_wm2": -0.477
+    },
+    "wind_speed_ms": {
+      "temperature_c": 0.442,
+      "relative_humidity_pct": -0.355,
+      "wind_speed_ms": 1.0,
+      "surface_pressure_hpa": -0.265,
+      "solar_radiation_wm2": 0.545
+    },
+    "surface_pressure_hpa": {
+      "temperature_c": -0.756,
+      "relative_humidity_pct": -0.029,
+      "wind_speed_ms": -0.265,
+      "surface_pressure_hpa": 1.0,
+      "solar_radiation_wm2": -0.096
+    },
+    "solar_radiation_wm2": {
+      "temperature_c": 0.545,
+      "relative_humidity_pct": -0.477,
+      "wind_speed_ms": 0.545,
+      "surface_pressure_hpa": -0.096,
+      "solar_radiation_wm2": 1.0
+    }
+  },
+  "eda_plot_path": "reports\\eda\\new_delhi_eda_overview.png"
+}

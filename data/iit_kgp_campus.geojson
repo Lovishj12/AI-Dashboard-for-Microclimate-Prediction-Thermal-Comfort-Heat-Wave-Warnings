@@ -1,0 +1,1203 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "campus_metadata": {
+    "institution": "Indian Institute of Technology Kharagpur",
+    "location": "Kharagpur, Paschim Medinipur, West Bengal, India",
+    "centroid": [
+      22.316,
+      87.308
+    ],
+    "bbox": [
+      87.295,
+      22.308,
+      87.322,
+      22.325
+    ],
+    "total_features": 24,
+    "sources": "OpenStreetMap, IIT KGP Campus Directory, BTP Local Climate Zone Modeling"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "main_building",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.310211,
+              22.319075
+            ],
+            [
+              87.311109,
+              22.319075
+            ],
+            [
+              87.311109,
+              22.319905
+            ],
+            [
+              87.310211,
+              22.319905
+            ],
+            [
+              87.310211,
+              22.319075
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "main_building",
+        "name": "Main Administrative Building (Tower Block)",
+        "category": "Administration",
+        "latitude": 22.31949,
+        "longitude": 87.31066,
+        "floors": 3,
+        "area_sqm": 8500,
+        "albedo": 0.25,
+        "vegetation_fraction": 0.35,
+        "impervious_fraction": 0.65,
+        "sky_view_factor": 0.7,
+        "ac_penetration": 0.7,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Medium",
+        "notes": "Historic clock tower, administrative offices, central lawn",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nalanda_complex",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.316414,
+              22.31618
+            ],
+            [
+              87.317646,
+              22.31618
+            ],
+            [
+              87.317646,
+              22.31732
+            ],
+            [
+              87.316414,
+              22.31732
+            ],
+            [
+              87.316414,
+              22.31618
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "nalanda_complex",
+        "name": "Nalanda Classroom Complex",
+        "category": "Academic",
+        "latitude": 22.31675,
+        "longitude": 87.31703,
+        "floors": 4,
+        "area_sqm": 16000,
+        "albedo": 0.3,
+        "vegetation_fraction": 0.2,
+        "impervious_fraction": 0.8,
+        "sky_view_factor": 0.8,
+        "ac_penetration": 0.9,
+        "estimated_footfall": "Very High",
+        "vulnerability_baseline": "High",
+        "notes": "Primary lecture complex with high student density during class hours",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "takshashila_complex",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.311717,
+              22.316727
+            ],
+            [
+              87.312783,
+              22.316727
+            ],
+            [
+              87.312783,
+              22.317713
+            ],
+            [
+              87.311717,
+              22.317713
+            ],
+            [
+              87.311717,
+              22.316727
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "takshashila_complex",
+        "name": "Takshashila Academic Complex",
+        "category": "Academic",
+        "latitude": 22.31722,
+        "longitude": 87.31225,
+        "floors": 4,
+        "area_sqm": 12000,
+        "albedo": 0.28,
+        "vegetation_fraction": 0.25,
+        "impervious_fraction": 0.75,
+        "sky_view_factor": 0.75,
+        "ac_penetration": 0.85,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Medium",
+        "notes": "Multistory academic classrooms and examination centers",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cse_department",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.308707,
+              22.317425
+            ],
+            [
+              87.309473,
+              22.317425
+            ],
+            [
+              87.309473,
+              22.318135
+            ],
+            [
+              87.308707,
+              22.318135
+            ],
+            [
+              87.308707,
+              22.317425
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "cse_department",
+        "name": "Dept of Computer Science & Engineering",
+        "category": "Academic",
+        "latitude": 22.31778,
+        "longitude": 87.30909,
+        "floors": 3,
+        "area_sqm": 6200,
+        "albedo": 0.24,
+        "vegetation_fraction": 0.3,
+        "impervious_fraction": 0.7,
+        "sky_view_factor": 0.65,
+        "ac_penetration": 0.95,
+        "estimated_footfall": "Medium",
+        "vulnerability_baseline": "Low",
+        "notes": "High AC heat rejection; mostly indoor air-conditioned computing labs",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "electrical_engineering",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.31,
+              22.320532
+            ],
+            [
+              87.31086,
+              22.320532
+            ],
+            [
+              87.31086,
+              22.321328
+            ],
+            [
+              87.31,
+              22.321328
+            ],
+            [
+              87.31,
+              22.320532
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "electrical_engineering",
+        "name": "Dept of Electrical Engineering",
+        "category": "Academic",
+        "latitude": 22.32093,
+        "longitude": 87.31043,
+        "floors": 3,
+        "area_sqm": 7800,
+        "albedo": 0.22,
+        "vegetation_fraction": 0.28,
+        "impervious_fraction": 0.72,
+        "sky_view_factor": 0.68,
+        "ac_penetration": 0.75,
+        "estimated_footfall": "Medium",
+        "vulnerability_baseline": "Medium",
+        "notes": "Heavy laboratory equipment with high power density",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mechanical_engineering",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.312388,
+              22.318447
+            ],
+            [
+              87.313432,
+              22.318447
+            ],
+            [
+              87.313432,
+              22.319413
+            ],
+            [
+              87.312388,
+              22.319413
+            ],
+            [
+              87.312388,
+              22.318447
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "mechanical_engineering",
+        "name": "Dept of Mechanical Engineering & Workshops",
+        "category": "Academic",
+        "latitude": 22.31893,
+        "longitude": 87.31291,
+        "floors": 2,
+        "area_sqm": 11500,
+        "albedo": 0.18,
+        "vegetation_fraction": 0.15,
+        "impervious_fraction": 0.85,
+        "sky_view_factor": 0.72,
+        "ac_penetration": 0.4,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "High",
+        "notes": "Large industrial metal roofs, high thermal storage, lower AC coverage in workshop bays",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "central_library",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.309398,
+              22.319773
+            ],
+            [
+              87.310322,
+              22.319773
+            ],
+            [
+              87.310322,
+              22.320627
+            ],
+            [
+              87.309398,
+              22.320627
+            ],
+            [
+              87.309398,
+              22.319773
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "central_library",
+        "name": "Central Library",
+        "category": "Academic",
+        "latitude": 22.3202,
+        "longitude": 87.30986,
+        "floors": 3,
+        "area_sqm": 9000,
+        "albedo": 0.28,
+        "vegetation_fraction": 0.35,
+        "impervious_fraction": 0.65,
+        "sky_view_factor": 0.68,
+        "ac_penetration": 0.85,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Low",
+        "notes": "Cooling sanctuary during peak daytime hours for students",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "kalidas_auditorium",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.310363,
+              22.316188
+            ],
+            [
+              87.311017,
+              22.316188
+            ],
+            [
+              87.311017,
+              22.316792
+            ],
+            [
+              87.310363,
+              22.316792
+            ],
+            [
+              87.310363,
+              22.316188
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "kalidas_auditorium",
+        "name": "Kalidas Auditorium",
+        "category": "Amenities",
+        "latitude": 22.31649,
+        "longitude": 87.31069,
+        "floors": 2,
+        "area_sqm": 4500,
+        "albedo": 0.25,
+        "vegetation_fraction": 0.32,
+        "impervious_fraction": 0.68,
+        "sky_view_factor": 0.75,
+        "ac_penetration": 0.8,
+        "estimated_footfall": "Medium",
+        "vulnerability_baseline": "Low",
+        "notes": "Large auditorium space with concrete plaza surrounding",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nehru_hall",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.298055,
+              22.319276
+            ],
+            [
+              87.299165,
+              22.319276
+            ],
+            [
+              87.299165,
+              22.320304
+            ],
+            [
+              87.298055,
+              22.320304
+            ],
+            [
+              87.298055,
+              22.319276
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "nehru_hall",
+        "name": "Nehru Hall of Residence (PAN Loop)",
+        "category": "Hostel",
+        "latitude": 22.31979,
+        "longitude": 87.29861,
+        "floors": 3,
+        "area_sqm": 13000,
+        "albedo": 0.2,
+        "vegetation_fraction": 0.5,
+        "impervious_fraction": 0.5,
+        "sky_view_factor": 0.6,
+        "ac_penetration": 0.15,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Very High",
+        "notes": "Student residential hall; high nocturnal thermal exposure; relies on natural ventilation",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "patel_hall",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.299136,
+              22.319606
+            ],
+            [
+              87.300224,
+              22.319606
+            ],
+            [
+              87.300224,
+              22.320614
+            ],
+            [
+              87.299136,
+              22.320614
+            ],
+            [
+              87.299136,
+              22.319606
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "patel_hall",
+        "name": "Patel Hall of Residence (PAN Loop)",
+        "category": "Hostel",
+        "latitude": 22.32011,
+        "longitude": 87.29968,
+        "floors": 3,
+        "area_sqm": 12500,
+        "albedo": 0.2,
+        "vegetation_fraction": 0.48,
+        "impervious_fraction": 0.52,
+        "sky_view_factor": 0.62,
+        "ac_penetration": 0.15,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Very High",
+        "notes": "Student residential hall; substantial evening heat trap in top-floor rooms",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "azad_hall",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.297937,
+              22.317607
+            ],
+            [
+              87.299003,
+              22.317607
+            ],
+            [
+              87.299003,
+              22.318593
+            ],
+            [
+              87.297937,
+              22.318593
+            ],
+            [
+              87.297937,
+              22.317607
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "azad_hall",
+        "name": "Azad Hall of Residence (PAN Loop)",
+        "category": "Hostel",
+        "latitude": 22.3181,
+        "longitude": 87.29847,
+        "floors": 3,
+        "area_sqm": 12000,
+        "albedo": 0.2,
+        "vegetation_fraction": 0.52,
+        "impervious_fraction": 0.48,
+        "sky_view_factor": 0.6,
+        "ac_penetration": 0.15,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Very High",
+        "notes": "Student residential hall; high non-AC population exposure",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rp_hall",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.307504,
+              22.321198
+            ],
+            [
+              87.308676,
+              22.321198
+            ],
+            [
+              87.308676,
+              22.322282
+            ],
+            [
+              87.307504,
+              22.322282
+            ],
+            [
+              87.307504,
+              22.321198
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "rp_hall",
+        "name": "Rajendra Prasad (RP) Hall of Residence",
+        "category": "Hostel",
+        "latitude": 22.32174,
+        "longitude": 87.30809,
+        "floors": 3,
+        "area_sqm": 14500,
+        "albedo": 0.22,
+        "vegetation_fraction": 0.4,
+        "impervious_fraction": 0.6,
+        "sky_view_factor": 0.65,
+        "ac_penetration": 0.2,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Very High",
+        "notes": "Located on Boundary Road with high residential density",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rk_hall",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.305624,
+              22.321627
+            ],
+            [
+              87.306776,
+              22.321627
+            ],
+            [
+              87.306776,
+              22.322693
+            ],
+            [
+              87.305624,
+              22.322693
+            ],
+            [
+              87.305624,
+              22.321627
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "rk_hall",
+        "name": "Radhakrishnan (RK) Hall of Residence",
+        "category": "Hostel",
+        "latitude": 22.32216,
+        "longitude": 87.3062,
+        "floors": 3,
+        "area_sqm": 14000,
+        "albedo": 0.22,
+        "vegetation_fraction": 0.42,
+        "impervious_fraction": 0.58,
+        "sky_view_factor": 0.64,
+        "ac_penetration": 0.2,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Very High",
+        "notes": "Older residential hall; prone to daytime heat buildup on terrace slab",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "lbs_hall",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.295818,
+              22.313169
+            ],
+            [
+              87.297182,
+              22.313169
+            ],
+            [
+              87.297182,
+              22.314431
+            ],
+            [
+              87.295818,
+              22.314431
+            ],
+            [
+              87.295818,
+              22.313169
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "lbs_hall",
+        "name": "Lal Bahadur Shastri (LBS) Hall",
+        "category": "Hostel",
+        "latitude": 22.3138,
+        "longitude": 87.2965,
+        "floors": 4,
+        "area_sqm": 22000,
+        "albedo": 0.26,
+        "vegetation_fraction": 0.35,
+        "impervious_fraction": 0.65,
+        "sky_view_factor": 0.72,
+        "ac_penetration": 0.25,
+        "estimated_footfall": "Very High",
+        "vulnerability_baseline": "High",
+        "notes": "Large modern multi-block hostel housing ~2000 students",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "bc_roy_hospital",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.300096,
+              22.316361
+            ],
+            [
+              87.300784,
+              22.316361
+            ],
+            [
+              87.300784,
+              22.316999
+            ],
+            [
+              87.300096,
+              22.316999
+            ],
+            [
+              87.300096,
+              22.316361
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "bc_roy_hospital",
+        "name": "Dr. B. C. Roy Technology Hospital",
+        "category": "Healthcare",
+        "latitude": 22.31668,
+        "longitude": 87.30044,
+        "floors": 2,
+        "area_sqm": 5000,
+        "albedo": 0.3,
+        "vegetation_fraction": 0.45,
+        "impervious_fraction": 0.55,
+        "sky_view_factor": 0.7,
+        "ac_penetration": 0.8,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Critical",
+        "notes": "Primary campus healthcare facility; vulnerable patients sensitive to heat stress",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "technology_guest_house",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.303617,
+              22.315527
+            ],
+            [
+              87.304403,
+              22.315527
+            ],
+            [
+              87.304403,
+              22.316253
+            ],
+            [
+              87.303617,
+              22.316253
+            ],
+            [
+              87.303617,
+              22.315527
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "technology_guest_house",
+        "name": "Technology Guest House",
+        "category": "Amenities",
+        "latitude": 22.31589,
+        "longitude": 87.30401,
+        "floors": 3,
+        "area_sqm": 6500,
+        "albedo": 0.28,
+        "vegetation_fraction": 0.48,
+        "impervious_fraction": 0.52,
+        "sky_view_factor": 0.66,
+        "ac_penetration": 0.9,
+        "estimated_footfall": "Medium",
+        "vulnerability_baseline": "Low",
+        "notes": "Well-shaded garden campus context with high air-conditioning coverage",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "tata_sports_complex",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.308197,
+              22.315186
+            ],
+            [
+              87.309503,
+              22.315186
+            ],
+            [
+              87.309503,
+              22.316394
+            ],
+            [
+              87.308197,
+              22.316394
+            ],
+            [
+              87.308197,
+              22.315186
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "tata_sports_complex",
+        "name": "Tata Sports Complex & Swimming Pool",
+        "category": "Sports/Open",
+        "latitude": 22.31579,
+        "longitude": 87.30885,
+        "floors": 1,
+        "area_sqm": 18000,
+        "albedo": 0.2,
+        "vegetation_fraction": 0.35,
+        "impervious_fraction": 0.65,
+        "sky_view_factor": 0.9,
+        "ac_penetration": 0.2,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Extreme",
+        "notes": "Outdoor sports courts, tennis courts, and track; zero afternoon shade",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "jnan_ghosh_stadium",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.303508,
+              22.317529
+            ],
+            [
+              87.304872,
+              22.317529
+            ],
+            [
+              87.304872,
+              22.318791
+            ],
+            [
+              87.303508,
+              22.318791
+            ],
+            [
+              87.303508,
+              22.317529
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "jnan_ghosh_stadium",
+        "name": "Jnan Ghosh Stadium (Main Athletic Ground)",
+        "category": "Sports/Open",
+        "latitude": 22.31816,
+        "longitude": 87.30419,
+        "floors": 1,
+        "area_sqm": 35000,
+        "albedo": 0.22,
+        "vegetation_fraction": 0.65,
+        "impervious_fraction": 0.35,
+        "sky_view_factor": 0.95,
+        "ac_penetration": 0.05,
+        "estimated_footfall": "Medium",
+        "vulnerability_baseline": "Extreme",
+        "notes": "Massive open turf field; intense direct solar irradiance exposure during midday",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gymkhana",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.306184,
+              22.316508
+            ],
+            [
+              87.306816,
+              22.316508
+            ],
+            [
+              87.306816,
+              22.317092
+            ],
+            [
+              87.306184,
+              22.317092
+            ],
+            [
+              87.306184,
+              22.316508
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "gymkhana",
+        "name": "Technology Students Gymkhana",
+        "category": "Amenities",
+        "latitude": 22.3168,
+        "longitude": 87.3065,
+        "floors": 2,
+        "area_sqm": 4200,
+        "albedo": 0.25,
+        "vegetation_fraction": 0.4,
+        "impervious_fraction": 0.6,
+        "sky_view_factor": 0.72,
+        "ac_penetration": 0.4,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Medium",
+        "notes": "Hub of student extracurricular activities, outdoor courts, and plaza",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "central_workshop",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.313725,
+              22.317761
+            ],
+            [
+              87.314675,
+              22.317761
+            ],
+            [
+              87.314675,
+              22.318639
+            ],
+            [
+              87.313725,
+              22.318639
+            ],
+            [
+              87.313725,
+              22.317761
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "central_workshop",
+        "name": "Central Industrial Workshop Complex",
+        "category": "Academic",
+        "latitude": 22.3182,
+        "longitude": 87.3142,
+        "floors": 1,
+        "area_sqm": 9500,
+        "albedo": 0.15,
+        "vegetation_fraction": 0.1,
+        "impervious_fraction": 0.9,
+        "sky_view_factor": 0.82,
+        "ac_penetration": 0.1,
+        "estimated_footfall": "Medium",
+        "vulnerability_baseline": "High",
+        "notes": "Dark corrugated roofs, manufacturing machinery, high thermal mass",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "scholars_avenue_junction",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.304467,
+              22.317007
+            ],
+            [
+              87.305533,
+              22.317007
+            ],
+            [
+              87.305533,
+              22.317993
+            ],
+            [
+              87.304467,
+              22.317993
+            ],
+            [
+              87.304467,
+              22.317007
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "scholars_avenue_junction",
+        "name": "Scholars Avenue Main Traffic Corridor",
+        "category": "Roads/Corridor",
+        "latitude": 22.3175,
+        "longitude": 87.305,
+        "floors": 0,
+        "area_sqm": 12000,
+        "albedo": 0.12,
+        "vegetation_fraction": 0.2,
+        "impervious_fraction": 0.8,
+        "sky_view_factor": 0.88,
+        "ac_penetration": 0.0,
+        "estimated_footfall": "Very High",
+        "vulnerability_baseline": "Extreme",
+        "notes": "Paved asphalt roadway corridor connecting residential PAN loop to academics",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "tikka_lake_zone",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.301318,
+              22.311869
+            ],
+            [
+              87.302682,
+              22.311869
+            ],
+            [
+              87.302682,
+              22.313131
+            ],
+            [
+              87.301318,
+              22.313131
+            ],
+            [
+              87.301318,
+              22.311869
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "tikka_lake_zone",
+        "name": "Tikka Lake & Wetland Microclimate Zone",
+        "category": "Water/Nature",
+        "latitude": 22.3125,
+        "longitude": 87.302,
+        "floors": 0,
+        "area_sqm": 25000,
+        "albedo": 0.1,
+        "vegetation_fraction": 0.75,
+        "impervious_fraction": 0.25,
+        "sky_view_factor": 0.85,
+        "ac_penetration": 0.0,
+        "estimated_footfall": "Low",
+        "vulnerability_baseline": "Low",
+        "notes": "Water body and peripheral canopy creating local evaporative cooling island",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "step_complex",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.314587,
+              22.320618
+            ],
+            [
+              87.315413,
+              22.320618
+            ],
+            [
+              87.315413,
+              22.321382
+            ],
+            [
+              87.314587,
+              22.321382
+            ],
+            [
+              87.314587,
+              22.320618
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "step_complex",
+        "name": "Science & Technology Entrepreneurs Park (STEP)",
+        "category": "Academic",
+        "latitude": 22.321,
+        "longitude": 87.315,
+        "floors": 3,
+        "area_sqm": 7200,
+        "albedo": 0.26,
+        "vegetation_fraction": 0.3,
+        "impervious_fraction": 0.7,
+        "sky_view_factor": 0.7,
+        "ac_penetration": 0.8,
+        "estimated_footfall": "Medium",
+        "vulnerability_baseline": "Low",
+        "notes": "Incubation and startup offices",
+        "verified_coordinates": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "old_sac_grounds",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              87.307565,
+              22.316697
+            ],
+            [
+              87.308435,
+              22.316697
+            ],
+            [
+              87.308435,
+              22.317503
+            ],
+            [
+              87.307565,
+              22.317503
+            ],
+            [
+              87.307565,
+              22.316697
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "old_sac_grounds",
+        "name": "Student Activity Centre (Old SAC) Grounds",
+        "category": "Amenities",
+        "latitude": 22.3171,
+        "longitude": 87.308,
+        "floors": 1,
+        "area_sqm": 8000,
+        "albedo": 0.22,
+        "vegetation_fraction": 0.35,
+        "impervious_fraction": 0.65,
+        "sky_view_factor": 0.8,
+        "ac_penetration": 0.3,
+        "estimated_footfall": "High",
+        "vulnerability_baseline": "Medium",
+        "notes": "Canteen areas, food stalls, open pedestrian gathering point",
+        "verified_coordinates": true
+      }
+    }
+  ]
+}

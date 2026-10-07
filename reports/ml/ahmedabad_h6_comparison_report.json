@@ -1,0 +1,88 @@
+{
+  "location": "ahmedabad",
+  "horizon_hours": 6,
+  "champion": "Ridge",
+  "comparison": {
+    "Ridge": {
+      "MAE_T": 1.041,
+      "RMSE_T": 1.394,
+      "R2_T": 0.9367,
+      "MAE_HI": 1.485,
+      "RMSE_HI": 1.959,
+      "Extreme_MAE_T": 1.137,
+      "Extreme_MAE_HI": 1.823,
+      "Danger_Precision": 0.8432,
+      "Danger_Recall": 0.9095,
+      "Danger_F1": 0.8751,
+      "Confusion_Matrix": [
+        [
+          1390,
+          114
+        ],
+        [
+          61,
+          613
+        ]
+      ]
+    },
+    "RandomForest": {
+      "MAE_T": 1.492,
+      "RMSE_T": 1.926,
+      "R2_T": 0.8793,
+      "MAE_HI": 1.855,
+      "RMSE_HI": 2.524,
+      "Extreme_MAE_T": 2.097,
+      "Extreme_MAE_HI": 2.166,
+      "Danger_Precision": 0.8561,
+      "Danger_Recall": 0.724,
+      "Danger_F1": 0.7846,
+      "Confusion_Matrix": [
+        [
+          1422,
+          82
+        ],
+        [
+          186,
+          488
+        ]
+      ]
+    },
+    "HistGradientBoosting": {
+      "MAE_T": 1.362,
+      "RMSE_T": 1.744,
+      "R2_T": 0.9009,
+      "MAE_HI": 1.435,
+      "RMSE_HI": 1.877,
+      "Extreme_MAE_T": 1.639,
+      "Extreme_MAE_HI": 1.595,
+      "Danger_Precision": 0.9485,
+      "Danger_Recall": 0.7656,
+      "Danger_F1": 0.8473,
+      "Confusion_Matrix": [
+        [
+          1476,
+          28
+        ],
+        [
+          158,
+          516
+        ]
+      ]
+    }
+  },
+  "top_features": {
+    "temp_roll_mean_24": 0.31971548757281415,
+    "hour_sin": 0.30800883574189103,
+    "heat_index_c": 0.07930364671638539,
+    "temp_roll_max_24": 0.07564808808007106,
+    "hour_cos": 0.0503429885943529,
+    "swbgt_c": 0.039692470588743846,
+    "temperature_c": 0.034571812790929475,
+    "temp_diff_1h": 0.01881613120817333,
+    "temp_roll_min_24": 0.013746704324525244,
+    "temp_lag_12": 0.011917948931846126
+  },
+  "champion_artifact_path": "models\\champion\\ahmedabad_champion_h6.joblib",
+  "comparison_plot_path": "reports\\ml\\ahmedabad_h6_model_comparison.png",
+  "feature_importance_plot_path": "reports\\ml\\ahmedabad_h6_feature_importance.png"
+}
