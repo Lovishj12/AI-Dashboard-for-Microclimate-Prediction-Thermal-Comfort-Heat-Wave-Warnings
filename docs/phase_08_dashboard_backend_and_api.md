@@ -39,11 +39,11 @@ All 9 endpoints were systematically validated using `TestClient` in [`tests/test
 | :--- | :--- | :--- | :--- |
 | `test_health_check` | `GET /api/health` | Returns `200 OK`, `status="healthy"`, and list of pilot stations | **PASSED** |
 | `test_metadata` | `GET /api/metadata` | Returns official standards citations and configuration thresholds | **PASSED** |
-| `test_stations_registry` | `GET /api/stations` | Returns 3 stations (Delhi, Kharagpur, Ahmedabad) with coordinates | **PASSED** |
-| `test_current_conditions` | `GET /api/current/new_delhi` | Returns latest observation, thermodynamic state, and overall warning | **PASSED** |
-| `test_forecast_endpoint` | `GET /api/forecast/new_delhi` | Produces $t+1\text{h}, t+3\text{h}, t+6\text{h}, t+24\text{h}$ AI forecast predictions | **PASSED** |
-| `test_history_endpoint` | `GET /api/history/new_delhi?days=3` | Returns exact 72 hourly observations with multi-metric time series | **PASSED** |
-| `test_psychrometric_chart_data` | `GET /api/psychrometrics/new_delhi` | Delivers saturation line, RH curves, ASHRAE comfort polygon, and points | **PASSED** |
+| `test_stations_registry` | `GET /api/stations` | Returns station registry dedicated exclusively to IIT Kharagpur | **PASSED** |
+| `test_current_conditions` | `GET /api/current/kharagpur` | Returns latest observation, thermodynamic state, and overall warning | **PASSED** |
+| `test_forecast_endpoint` | `GET /api/forecast/kharagpur` | Produces $t+1\text{h}, t+3\text{h}, t+6\text{h}, t+24\text{h}$ AI forecast predictions | **PASSED** |
+| `test_history_endpoint` | `GET /api/history/kharagpur?days=3` | Returns exact 72 hourly observations with multi-metric time series | **PASSED** |
+| `test_psychrometric_chart_data` | `GET /api/psychrometrics/kharagpur` | Delivers saturation line, RH curves, ASHRAE comfort polygon, and points | **PASSED** |
 | `test_calculate_endpoint` | `POST /api/calculate` | Computes arbitrary inputs ($44^\circ\text{C}, 30\%$) with complete explainability | **PASSED** |
 | `test_invalid_station_404` | `GET /api/current/invalid_xyz` | Responds with standard `404 Not Found` for nonexistent stations | **PASSED** |
 

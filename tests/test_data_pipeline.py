@@ -21,8 +21,8 @@ class TestDataPipeline(unittest.TestCase):
     def test_config_structure(self):
         self.assertIn("locations", self.config)
         self.assertIn("data_pipeline", self.config)
-        self.assertIn("warning_thresholds", self.config)
-        self.assertTrue(len(self.locations) >= 3)
+        self.assertIn("kharagpur", self.locations)
+        self.assertEqual(len(self.locations), 1)
         
     def test_datasets_exist(self):
         for loc in self.locations:

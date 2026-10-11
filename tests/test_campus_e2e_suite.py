@@ -156,30 +156,13 @@ def test_08_campus_vulnerability_layer():
     assert "vulnerability_tier" in precincts[0]
     assert "directive" in precincts[0]
 
-def test_09_what_if_mitigation_engine():
-    """Verify GET /api/campus/mitigation computes thermodynamic cooling relief across 4 strategies."""
-    strategies = [
-        "cool_roofs",
-        "tree_canopy_expansion",
-        "permeable_reflective_pavements",
-        "comprehensive_green_infrastructure"
-    ]
-    for strat in strategies:
-        res = client.get(f"/api/campus/mitigation?intervention_type={strat}")
-        assert res.status_code == 200
-        data = res.json()
-        assert data["intervention"]["mean_temperature_reduction_c"] > 0
-        assert data["intervention"]["mean_heat_index_relief_c"] > 0
-        assert data["intervention"]["average_hvac_energy_reduction_pct"] > 0
-
-def test_10_academic_tier_labeling():
+def test_09_academic_tier_labeling():
     """Verify all campus microclimate and forecasting endpoints explicitly declare academic tier."""
     endpoints = [
         "/api/campus/microclimate/current",
         "/api/campus/forecast/3",
         "/api/campus/heatwave",
-        "/api/campus/vulnerability",
-        "/api/campus/mitigation"
+        "/api/campus/vulnerability"
     ]
     for ep in endpoints:
         res = client.get(ep)
@@ -201,18 +184,21 @@ def test_10_academic_tier_labeling():
     assert "tier" in res_b.json()["modelled_microclimate"]
 
 def test_11_preservation_of_phases_1_to_9():
-    """Verify original baseline weather, psychrometric, forecast, and history endpoints remain functional."""
-    # 1. Weather station registry
+    """Verify original baseline weather, psychrometric, forecast, and history endpoints remain functional for Kharagpur exclusively."""
+    # 1. Weather station registry: ONLY IIT Kharagpur permitted
     res_st = client.get("/api/stations")
     assert res_st.status_code == 200
     stations = res_st.json()
-    assert len(stations) >= 3
-    station_ids = [s["id"] for s in stations]
-    assert "kharagpur" in station_ids
-    assert "new_delhi" in station_ids
+    assert len(stations) == 1
+    assert stations[0]["id"] == "kharagpur"
+    assert "IIT Kharagpur" in stations[0]["name"]
 
-    # 2. Psychrometrics
-    res_psy = client.get("/api/psychrometrics/new_delhi")
+    # Verify rejection of other cities
+    assert client.get("/api/current/new_delhi").status_code == 404
+    assert client.get("/api/current/ahmedabad").status_code == 404
+
+    # 2. Psychrometrics for Kharagpur
+    res_psy = client.get("/api/psychrometrics/kharagpur")
     assert res_psy.status_code == 200
     assert "rh_curves" in res_psy.json()
 
@@ -240,9 +226,8 @@ def run_all_e2e_tests():
         ("Test 06: Diurnal 24-Hour Solar Cycle Physics", test_06_diurnal_24h_cycle_physics),
         ("Test 07: Extreme Heat Wave Stress Testing (IMD Thresholds)", test_07_extreme_heat_wave_stress_scenarios),
         ("Test 08: Multi-Dimensional Campus Vulnerability Layer", test_08_campus_vulnerability_layer),
-        ("Test 09: What-If Urban Cooling Mitigation Engine (UNSW Index)", test_09_what_if_mitigation_engine),
-        ("Test 10: Academic Integrity Tier Labeling on All Endpoints", test_10_academic_tier_labeling),
-        ("Test 11: Preservation of Phases 1-9 Core Engine & Visualizers", test_11_preservation_of_phases_1_to_9),
+        ("Test 09: Academic Integrity Tier Labeling on All Endpoints", test_09_academic_tier_labeling),
+        ("Test 10: Preservation of Phases 1-9 Core Engine & Visualizers", test_11_preservation_of_phases_1_to_9),
     ]
 
     passed = 0

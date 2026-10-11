@@ -17,7 +17,7 @@ The user interface adheres to strict academic and aesthetic design standards:
 ## 2. Implemented Dashboard Modules
 
 ### 2.1 Station Selector & Operational Header
-- Station dropdown switching dynamically between pilot benchmarks (**New Delhi**, **Kharagpur**, **Ahmedabad**) with real-time state fetching.
+- Real-time station monitoring dedicated exclusively to **IIT Kharagpur campus microclimate** with real-time state fetching.
 - Project metadata branding highlighting supervisor and thesis context.
 
 ### 2.2 Synthesized Warning Alert Banner

@@ -20,35 +20,35 @@ class TestWarningEngine(unittest.TestCase):
         cls.config = load_config()
         cls.engine = AdvancedWarningEngine(cls.config)
         
-        # Load a recent slice of New Delhi data for testing forecasts
-        csv_path = Path(cls.config["data_pipeline"]["processed_dir"]) / "enriched" / "new_delhi_enriched_hourly.csv"
+        # Load a recent slice of Kharagpur data for testing forecasts
+        csv_path = Path(cls.config["data_pipeline"]["processed_dir"]) / "enriched" / "kharagpur_enriched_hourly.csv"
         cls.df = pd.read_csv(csv_path, index_col="timestamp_utc", parse_dates=True)
 
     def test_imd_heat_wave_classification(self):
-        # 1. Normal day in Delhi (T = 36°C)
-        res_normal = self.engine.evaluate_imd_heat_wave_status("new_delhi", 36.0, month=5)
+        # 1. Normal day in Kharagpur (T = 35°C)
+        res_normal = self.engine.evaluate_imd_heat_wave_status("kharagpur", 35.0, month=5)
         self.assertEqual(res_normal["status"], "No Heat Wave")
         self.assertEqual(res_normal["severity_rank"], 0)
         
-        # 2. Heat wave by departure (Safdarjung normal = 39.9°C, test at 44.5°C -> departure = +4.6°C)
-        res_hw = self.engine.evaluate_imd_heat_wave_status("new_delhi", 44.5, month=5)
+        # 2. Heat wave by departure (Kharagpur normal = 37.1°C, test at 42.0°C -> departure = +4.9°C)
+        res_hw = self.engine.evaluate_imd_heat_wave_status("kharagpur", 42.0, month=5)
         self.assertEqual(res_hw["status"], "Heat Wave")
         self.assertGreaterEqual(res_hw["severity_rank"], 2)
         
-        # 3. Severe heat wave by absolute criteria (T = 47.5°C)
-        res_severe = self.engine.evaluate_imd_heat_wave_status("new_delhi", 47.5, month=5)
+        # 3. Severe heat wave by absolute criteria (T = 47.0°C)
+        res_severe = self.engine.evaluate_imd_heat_wave_status("kharagpur", 47.0, month=5)
         self.assertEqual(res_severe["status"], "Severe Heat Wave")
         self.assertEqual(res_severe["severity_rank"], 3)
 
     def test_comprehensive_warning_synthesis(self):
         # Benign state: 25°C, 45% RH
-        w_benign = self.engine.generate_comprehensive_warning(25.0, 45.0, "new_delhi")
+        w_benign = self.engine.generate_comprehensive_warning(25.0, 45.0, "kharagpur")
         self.assertEqual(w_benign["overall_level"], "NORMAL")
         self.assertEqual(w_benign["overall_color"], "#2ecc71")
         self.assertIn("thermodynamic_state", w_benign)
         
         # Danger state: 41°C, 35% RH (HI ~ 48°C)
-        w_danger = self.engine.generate_comprehensive_warning(41.0, 35.0, "new_delhi")
+        w_danger = self.engine.generate_comprehensive_warning(41.0, 35.0, "kharagpur")
         self.assertIn(w_danger["overall_level"], ["DANGER", "EXTREME DANGER", "CRITICAL EMERGENCY"])
         self.assertGreater(len(w_danger["explainability"]["primary_triggers"]), 0)
         self.assertGreater(len(w_danger["explainability"]["action_recommendations"]), 0)
@@ -56,9 +56,9 @@ class TestWarningEngine(unittest.TestCase):
     def test_multi_horizon_forecast_pipeline(self):
         # Feed 48 hours of real historical data into forecast engine
         test_window = self.df.iloc[-48:]
-        forecast_res = self.engine.generate_multi_horizon_forecast("new_delhi", test_window)
+        forecast_res = self.engine.generate_multi_horizon_forecast("kharagpur", test_window)
         
-        self.assertEqual(forecast_res["location"], "new_delhi")
+        self.assertEqual(forecast_res["location"], "kharagpur")
         self.assertIn("current_status", forecast_res)
         self.assertIn("forecasts", forecast_res)
         

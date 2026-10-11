@@ -1,13 +1,5 @@
 Location,Horizon,Champion,Ridge_RMSE,Champ_RMSE,Champ_R2,Champ_MAE_T,Champ_Extreme_MAE,Champ_Danger_Recall,Champ_Danger_F1
-new_delhi,1,Ridge,0.723,0.723,0.9882,0.551,0.507,0.9335,0.9505
-new_delhi,3,Ridge,1.649,1.649,0.9385,1.274,1.265,0.8183,0.8801
-new_delhi,6,Ridge,1.645,1.645,0.9385,1.273,1.302,0.7302,0.8169
-new_delhi,24,Ridge,1.729,1.729,0.9317,1.401,1.644,0.8705,0.9021
 kharagpur,1,HistGradientBoosting,0.425,0.417,0.993,0.291,0.485,0.9398,0.9356
 kharagpur,3,HistGradientBoosting,1.08,0.867,0.9697,0.621,0.796,0.8586,0.8704
 kharagpur,6,HistGradientBoosting,1.416,1.206,0.9411,0.872,1.124,0.785,0.8259
 kharagpur,24,Ridge,1.301,1.301,0.9315,0.944,1.414,0.7867,0.8274
-ahmedabad,1,Ridge,0.463,0.463,0.9931,0.346,0.35,0.9496,0.9574
-ahmedabad,3,Ridge,1.138,1.138,0.9581,0.889,0.803,0.9169,0.9265
-ahmedabad,6,Ridge,1.394,1.394,0.9367,1.041,1.137,0.9095,0.8751
-ahmedabad,24,Ridge,1.449,1.449,0.9316,1.17,1.184,0.8546,0.8734

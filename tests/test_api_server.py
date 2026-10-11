@@ -25,7 +25,9 @@ class TestAPIServer(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertEqual(data["status"], "healthy")
-        self.assertIn("new_delhi", data["available_stations"])
+        self.assertIn("kharagpur", data["available_stations"])
+        self.assertNotIn("new_delhi", data["available_stations"])
+        self.assertNotIn("ahmedabad", data["available_stations"])
 
     def test_metadata(self):
         res = self.client.get("/api/metadata")
@@ -38,23 +40,21 @@ class TestAPIServer(unittest.TestCase):
         res = self.client.get("/api/stations")
         self.assertEqual(res.status_code, 200)
         stations = res.json()
-        self.assertEqual(len(stations), 3)
-        station_ids = [s["id"] for s in stations]
-        self.assertIn("new_delhi", station_ids)
-        self.assertIn("kharagpur", station_ids)
-        self.assertIn("ahmedabad", station_ids)
+        self.assertEqual(len(stations), 1)
+        self.assertEqual(stations[0]["id"], "kharagpur")
+        self.assertIn("IIT Kharagpur", stations[0]["name"])
 
     def test_current_conditions(self):
-        res = self.client.get("/api/current/new_delhi")
+        res = self.client.get("/api/current/kharagpur")
         self.assertEqual(res.status_code, 200)
         data = res.json()
-        self.assertEqual(data["station_id"], "new_delhi")
+        self.assertEqual(data["station_id"], "kharagpur")
         self.assertIn("status", data)
         self.assertIn("thermodynamic_state", data["status"])
         self.assertIn("overall_level", data["status"])
 
     def test_forecast_endpoint(self):
-        res = self.client.get("/api/forecast/new_delhi")
+        res = self.client.get("/api/forecast/kharagpur")
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertIn("forecasts", data)
@@ -62,14 +62,14 @@ class TestAPIServer(unittest.TestCase):
             self.assertIn(f"t_plus_{h}h", data["forecasts"])
 
     def test_history_endpoint(self):
-        res = self.client.get("/api/history/new_delhi?days=3")
+        res = self.client.get("/api/history/kharagpur?days=3")
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertEqual(data["days"], 3)
         self.assertEqual(len(data["series"]), 72)
 
     def test_psychrometric_chart_data(self):
-        res = self.client.get("/api/psychrometrics/new_delhi")
+        res = self.client.get("/api/psychrometrics/kharagpur")
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertIn("rh_curves", data)
@@ -82,7 +82,7 @@ class TestAPIServer(unittest.TestCase):
         payload = {
             "temperature_c": 44.0,
             "relative_humidity_pct": 30.0,
-            "location_key": "new_delhi"
+            "location_key": "kharagpur"
         }
         res = self.client.post("/api/calculate", json=payload)
         self.assertEqual(res.status_code, 200)
@@ -94,6 +94,9 @@ class TestAPIServer(unittest.TestCase):
     def test_invalid_station_404(self):
         res = self.client.get("/api/current/invalid_station_xyz")
         self.assertEqual(res.status_code, 404)
+        # Verify New Delhi and Ahmedabad are rejected
+        self.assertEqual(self.client.get("/api/current/new_delhi").status_code, 404)
+        self.assertEqual(self.client.get("/api/current/ahmedabad").status_code, 404)
 
 if __name__ == "__main__":
     unittest.main()

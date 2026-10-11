@@ -180,6 +180,18 @@ class CampusMicroclimateEngine:
                 baseline_rating=vuln_base
             )
 
+            # Physical Land Surface Temperature (LST / Rooftop Skin Temp) based on surface energy balance
+            # Stefan-Boltzmann radiative equilibrium approximation:
+            # T_skin = T_air + ( (1 - albedo) * solar_radiation_wm2 - net_longwave ) / (h_c + h_r)
+            # where convective heat transfer coefficient h_c ~ 10 + 4 * wind_speed
+            h_conv = max(8.0, 10.0 + 3.8 * max(0.5, regional_wind_speed_ms))
+            net_solar_absorbed = (1.0 - albedo) * regional_solar_radiation_wm2
+            # Net radiative/convective surface temperature elevation above ambient air
+            surface_delta_t = net_solar_absorbed / h_conv - (veg_frac * 2.5)
+            # Thermal mass factor from imperviousness
+            surface_delta_t = surface_delta_t * (0.6 + 0.6 * imp_frac)
+            surface_temp_c = round(local_t + max(-1.0, min(14.0, surface_delta_t * 0.45)), 1)
+
             building_results.append({
                 "id": b_id,
                 "name": name,
@@ -199,6 +211,7 @@ class CampusMicroclimateEngine:
                 "microclimate": {
                     "tier": "Modelled / Estimated (Physics-Downscaled)",
                     "temperature_c": local_t,
+                    "surface_temperature_c": surface_temp_c,
                     "temperature_delta_c": deltas["temperature_delta_c"],
                     "relative_humidity_pct": local_rh,
                     "wet_bulb_c": local_twb,

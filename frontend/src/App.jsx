@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PsychrometricChart from './components/PsychrometricChart';
 import TrendChart from './components/TrendChart';
 import CampusMap from './components/CampusMap';
@@ -6,13 +6,12 @@ import BuildingInspector from './components/BuildingInspector';
 import CampusRiskRanking from './components/CampusRiskRanking';
 import HeatWaveScenarioView from './components/HeatWaveScenarioView';
 import CampusVulnerabilityLayer from './components/CampusVulnerabilityLayer';
-import CampusMitigationView from './components/CampusMitigationView';
+import { computeAirState } from './utils/psychrometrics';
 
 const API_BASE = 'http://127.0.0.1:8000/api';
 
 export default function App() {
-  const [stations, setStations] = useState([]);
-  const [selectedStation, setSelectedStation] = useState('new_delhi');
+  const [selectedStation, setSelectedStation] = useState('kharagpur');
   const [selectedBuildingId, setSelectedBuildingId] = useState('nalanda_complex');
   const [currentData, setCurrentData] = useState(null);
   const [forecastData, setForecastData] = useState(null);
@@ -21,11 +20,20 @@ export default function App() {
   const [campusMicroclimate, setCampusMicroclimate] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Psychrometric Chart Reactive Slider State
+  const [psychroTemp, setPsychroTemp] = useState(38.0);
+  const [psychroRH, setPsychroRH] = useState(45.0);
+
   // Custom Calculator State
   const [calcTemp, setCalcTemp] = useState(42.0);
   const [calcRH, setCalcRH] = useState(40.0);
   const [calcResult, setCalcResult] = useState(null);
   const [calcLoading, setCalcLoading] = useState(false);
+
+  // Compute reactive psychrometric state in real-time whenever psychroTemp or psychroRH changes
+  const activePsychroState = useMemo(() => {
+    return computeAirState(psychroTemp, psychroRH);
+  }, [psychroTemp, psychroRH]);
 
   // Fetch campus microclimate for ranking table
   useEffect(() => {
@@ -35,40 +43,42 @@ export default function App() {
       .catch((err) => console.error('Error fetching campus microclimate for ranking:', err));
   }, []);
 
-  // Fetch initial station registry
+  // Fetch station telemetry and visualizer data for IIT Kharagpur
   useEffect(() => {
-    fetch(`${API_BASE}/stations`)
-      .then((res) => res.json())
-      .then((data) => {
-        setStations(data);
-        if (data.length > 0) setSelectedStation(data[0].id);
-      })
-      .catch((err) => console.error('Error fetching stations:', err));
-  }, []);
-
-  // Fetch station telemetry and visualizer data
-  useEffect(() => {
-    if (!selectedStation) return;
     setLoading(true);
 
     Promise.all([
-      fetch(`${API_BASE}/current/${selectedStation}`).then((r) => r.json()),
-      fetch(`${API_BASE}/forecast/${selectedStation}`).then((r) => r.json()),
-      fetch(`${API_BASE}/history/${selectedStation}?days=3`).then((r) => r.json()),
-      fetch(`${API_BASE}/psychrometrics/${selectedStation}`).then((r) => r.json()),
+      fetch(`${API_BASE}/current/kharagpur`).then((r) => r.json()),
+      fetch(`${API_BASE}/forecast/kharagpur`).then((r) => r.json()),
+      fetch(`${API_BASE}/history/kharagpur?days=3`).then((r) => r.json()),
+      fetch(`${API_BASE}/psychrometrics/kharagpur`).then((r) => r.json()),
     ])
       .then(([current, forecast, history, psychro]) => {
         setCurrentData(current);
         setForecastData(forecast);
         setHistoryData(history);
         setPsychroData(psychro);
+        if (current?.status?.thermodynamic_state) {
+          const liveT = current.status.thermodynamic_state.temperature_c;
+          const liveRH = current.status.thermodynamic_state.relative_humidity_pct;
+          setPsychroTemp(liveT);
+          setPsychroRH(liveRH);
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Error loading dashboard data:', err);
+        console.error('Error loading dashboard data for IIT Kharagpur:', err);
         setLoading(false);
       });
-  }, [selectedStation]);
+  }, []);
+
+  // Synchronize Psychrometric state back to live Kharagpur telemetry
+  const handleResetToLive = useCallback(() => {
+    if (currentData?.status?.thermodynamic_state) {
+      setPsychroTemp(currentData.status.thermodynamic_state.temperature_c);
+      setPsychroRH(currentData.status.thermodynamic_state.relative_humidity_pct);
+    }
+  }, [currentData]);
 
   // Handle Interactive Calculator Submission
   const handleCalculate = () => {
@@ -79,7 +89,7 @@ export default function App() {
       body: JSON.stringify({
         temperature_c: parseFloat(calcTemp),
         relative_humidity_pct: parseFloat(calcRH),
-        location_key: selectedStation,
+        location_key: 'kharagpur',
       }),
     })
       .then((res) => res.json())
@@ -95,7 +105,7 @@ export default function App() {
 
   useEffect(() => {
     handleCalculate();
-  }, [selectedStation]);
+  }, []);
 
   const statusObj = currentData?.status;
   const thermo = statusObj?.thermodynamic_state;
@@ -107,29 +117,32 @@ export default function App() {
       <header className="app-header">
         <div className="header-title-group">
           <div>
-            <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc' }}>
-              Microclimate Intelligence & Thermal Warning Dashboard
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc' }}>
+              IIT Kharagpur Microclimate & Thermal Risk Dashboard
             </h1>
             <p style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
-              Bachelor Thesis Project (BTP) — Supervisor: Prof. Chirodeep Bakli
+              Bachelor Thesis Project (BTP) — Supervisor: Prof. Chirodeep Bakli | Campus Domain: 22.3149°N, 87.3105°E
             </p>
           </div>
           <span className="badge-tag">AI-POWERED</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-          <label style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Monitoring Station:</label>
-          <select
-            className="station-select"
-            value={selectedStation}
-            onChange={(e) => setSelectedStation(e.target.value)}
-          >
-            {stations.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.climate_zone.split(' ')[0]})
-              </option>
-            ))}
-          </select>
+          <div style={{
+            background: 'rgba(56, 189, 248, 0.1)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            borderRadius: '8px',
+            padding: '6px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '1rem' }}>📍</span>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location Study Area</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#38bdf8' }}>IIT Kharagpur Campus, WB, India</div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -222,7 +235,7 @@ export default function App() {
               <div>
                 <h3 className="section-title">AI Multi-Horizon Forecast & Projected Risk</h3>
                 <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                  Model inference using location-trained champion regressors (Ridge / HistGradientBoosting)
+                  Model inference using IIT Kharagpur-trained champion regressors (HistGradientBoosting / Ridge)
                 </p>
               </div>
             </div>
@@ -303,8 +316,6 @@ export default function App() {
             selectedBuildingId={selectedBuildingId}
             onSelectBuilding={(id) => setSelectedBuildingId(id)}
           />
-
-          <CampusMitigationView />
         </section>
 
         {/* 2-Column Scientific Visualizers Grid */}
@@ -322,6 +333,24 @@ export default function App() {
             <PsychrometricChart
               psychroData={psychroData}
               currentPoint={psychroData?.current_point}
+              activeState={activePsychroState}
+              sliderTemp={psychroTemp}
+              sliderRH={psychroRH}
+              onTempChange={(newT) => {
+                setPsychroTemp(newT);
+                setCalcTemp(newT);
+              }}
+              onRHChange={(newRH) => {
+                setPsychroRH(newRH);
+                setCalcRH(newRH);
+              }}
+              onResetToLive={() => {
+                handleResetToLive();
+                if (currentData?.status?.thermodynamic_state) {
+                  setCalcTemp(currentData.status.thermodynamic_state.temperature_c);
+                  setCalcRH(currentData.status.thermodynamic_state.relative_humidity_pct);
+                }
+              }}
             />
           </div>
 
@@ -335,7 +364,14 @@ export default function App() {
                 </p>
               </div>
             </div>
-            <TrendChart series={historyData?.series} />
+            <TrendChart
+              series={historyData?.series}
+              dataSource={historyData?.data_source}
+              dataSourceLabel={historyData?.data_source_label}
+              timezone={historyData?.timezone}
+              startTimestamp={historyData?.start_timestamp}
+              endTimestamp={historyData?.end_timestamp}
+            />
           </div>
         </div>
 
@@ -363,7 +399,11 @@ export default function App() {
                   max="50"
                   step="0.5"
                   value={calcTemp}
-                  onChange={(e) => setCalcTemp(e.target.value)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setCalcTemp(val);
+                    setPsychroTemp(val);
+                  }}
                 />
               </div>
 
@@ -378,7 +418,11 @@ export default function App() {
                   max="100"
                   step="1"
                   value={calcRH}
-                  onChange={(e) => setCalcRH(e.target.value)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setCalcRH(val);
+                    setPsychroRH(val);
+                  }}
                 />
               </div>
 

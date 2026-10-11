@@ -48,7 +48,7 @@ CHAMPION_MODELS_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR = Path("reports/ml")
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-def train_and_compare_models(location_key: str = "new_delhi", horizon: int = 1) -> Dict:
+def train_and_compare_models(location_key: str = "kharagpur", horizon: int = 1) -> Dict:
     """
     Trains Ridge, Random Forest, and HistGradientBoosting for horizon h,
     evaluates overall regression, extreme heat subset metrics, safety recall,

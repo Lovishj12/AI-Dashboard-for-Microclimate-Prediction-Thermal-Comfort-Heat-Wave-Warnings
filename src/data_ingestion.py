@@ -156,7 +156,168 @@ def ingest_location(
     logger.info(f"Saved processed time series (CSV): {csv_path} ({len(df)} records)")
     return csv_path
 
+# In-memory cache for recent telemetry to prevent repeated external API requests
+_RECENT_TELEMETRY_CACHE = {}
+
+def fetch_recent_telemetry_series(
+    location_key: str = "kharagpur",
+    hours: int = 72,
+    force_refresh: bool = False
+) -> Dict[str, Any]:
+    """
+    Fetches real-time / recent continuous hourly observations for IIT Kharagpur in Asia/Kolkata timezone.
+    
+    1. Attempts live query to Open-Meteo High-Resolution reanalysis/nowcast grid for IIT Kharagpur (22.3149°N, 87.3105°E).
+    2. Enriches the hourly data with full physical and biometeorological parameters (Dew Point, Wet-Bulb, Heat Index, sWBGT).
+    3. Trims to exact requested window (e.g., 72 continuous hours) up to the latest available observation.
+    4. If network is unreachable or live feed fails, falls back to the archived NASA POWER baseline dataset and clearly
+       flags the payload with data_source: "historical_benchmark".
+    """
+    import time
+    from datetime import datetime
+    import zoneinfo
+    from src.scientific_engine import enrich_meteorological_dataframe
+
+    config = load_config()
+    loc_info = config["locations"].get(location_key)
+    if not loc_info:
+        raise KeyError(f"Location '{location_key}' not found in configuration.")
+
+    cache_key = f"{location_key}_{hours}"
+    now_ts = time.time()
+    
+    # Cache for 15 minutes (900 seconds)
+    if not force_refresh and cache_key in _RECENT_TELEMETRY_CACHE:
+        cached_entry = _RECENT_TELEMETRY_CACHE[cache_key]
+        if now_ts - cached_entry["cached_at"] < 900:
+            return cached_entry["data"]
+
+    lat = loc_info["latitude"]
+    lon = loc_info["longitude"]
+    days_to_fetch = max(4, (hours // 24) + 2)
+
+    # 1. Attempt live telemetry fetch
+    try:
+        url = (
+            f"https://api.open-meteo.com/v1/forecast?latitude={lat:.4f}&longitude={lon:.4f}"
+            f"&hourly=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,direct_normal_irradiance"
+            f"&past_days={days_to_fetch}&forecast_days=1&timezone=Asia%2FKolkata"
+        )
+        req = urllib.request.Request(url, headers={"User-Agent": "BTP-IIT-Kharagpur-Research/1.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            if resp.status == 200:
+                raw_json = json.loads(resp.read().decode("utf-8"))
+                hourly = raw_json.get("hourly", {})
+                time_strings = hourly.get("time", [])
+
+                if time_strings:
+                    raw_df = pd.DataFrame({
+                        "timestamp": pd.to_datetime(time_strings),
+                        "temperature_c": hourly.get("temperature_2m", []),
+                        "relative_humidity_pct": hourly.get("relative_humidity_2m", []),
+                        "surface_pressure_hpa": hourly.get("surface_pressure", [1013.25] * len(time_strings)),
+                        "wind_speed_ms": [round(w / 3.6, 2) for w in hourly.get("wind_speed_10m", [0.0] * len(time_strings))],
+                        "solar_radiation_wm2": hourly.get("direct_normal_irradiance", [0.0] * len(time_strings))
+                    })
+                    raw_df.set_index("timestamp", inplace=True)
+                    
+                    # Fill any minor missing points with forward fill
+                    raw_df = raw_df.ffill().bfill()
+                    
+                    # Compute thermodynamic & biometeorological variables
+                    enriched_df = enrich_meteorological_dataframe(raw_df)
+
+                    # Limit observations to up to current hour in Asia/Kolkata
+                    tz_kolkata = zoneinfo.ZoneInfo("Asia/Kolkata")
+                    now_ist = datetime.now(tz_kolkata)
+                    current_hour_str = now_ist.strftime("%Y-%m-%d %H:00:00")
+                    
+                    obs_df = enriched_df[enriched_df.index <= current_hour_str]
+                    if len(obs_df) < hours:
+                        obs_df = enriched_df  # Fallback to full available slice
+
+                    slice_df = obs_df.iloc[-hours:].copy()
+
+                    records = []
+                    for ts, row in slice_df.iterrows():
+                        # ISO 8601 string with Asia/Kolkata timezone offset (+05:30)
+                        ts_str = ts.strftime("%Y-%m-%d %H:%M:%S")
+                        records.append({
+                            "timestamp": ts_str,
+                            "iso_timestamp": f"{ts.strftime('%Y-%m-%dT%H:%M:%S')}+05:30",
+                            "temperature_c": round(float(row["temperature_c"]), 1),
+                            "relative_humidity_pct": round(float(row["relative_humidity_pct"]), 1),
+                            "wet_bulb_c": round(float(row["wet_bulb_c"]), 1),
+                            "dew_point_c": round(float(row["dew_point_c"]), 1),
+                            "heat_index_c": round(float(row["heat_index_c"]), 1),
+                            "swbgt_c": round(float(row["swbgt_c"]), 1),
+                            "solar_radiation_wm2": round(float(row.get("solar_radiation_wm2", 0.0)), 1),
+                            "wind_speed_ms": round(float(row.get("wind_speed_ms", 0.0)), 1)
+                        })
+
+                    result_data = {
+                        "station_id": location_key,
+                        "location_name": loc_info["name"],
+                        "data_source": "live_telemetry",
+                        "data_source_label": "Live Telemetry (Open-Meteo / IMD Grid)",
+                        "timezone": "Asia/Kolkata",
+                        "timezone_offset": "+05:30",
+                        "hours": len(records),
+                        "start_timestamp": records[0]["timestamp"] if records else None,
+                        "end_timestamp": records[-1]["timestamp"] if records else None,
+                        "series": records
+                    }
+
+                    _RECENT_TELEMETRY_CACHE[cache_key] = {
+                        "cached_at": now_ts,
+                        "data": result_data
+                    }
+                    return result_data
+    except Exception as e:
+        logger.warning(f"Live telemetry fetch for {location_key} failed ({e}). Falling back to curated historical dataset.")
+
+    # 2. Graceful Fallback: Curated NASA POWER / IMD Historical Dataset
+    processed_dir = Path(config["data_pipeline"]["processed_dir"]) / "enriched"
+    csv_path = processed_dir / f"{location_key}_enriched_hourly.csv"
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Enriched historical dataset missing at {csv_path}")
+
+    hist_df = pd.read_csv(csv_path, index_col="timestamp_utc", parse_dates=True)
+    slice_df = hist_df.iloc[-hours:].copy()
+
+    records = []
+    for ts, row in slice_df.iterrows():
+        # Convert UTC timestamp to Asia/Kolkata (+05:30)
+        ts_utc = ts.tz_localize("UTC") if ts.tzinfo is None else ts
+        ts_ist = ts_utc.tz_convert("Asia/Kolkata")
+        records.append({
+            "timestamp": ts_ist.strftime("%Y-%m-%d %H:%M:%S"),
+            "iso_timestamp": ts_ist.isoformat(),
+            "temperature_c": round(float(row["temperature_c"]), 1),
+            "relative_humidity_pct": round(float(row["relative_humidity_pct"]), 1),
+            "wet_bulb_c": round(float(row["wet_bulb_c"]), 1),
+            "dew_point_c": round(float(row["dew_point_c"]), 1),
+            "heat_index_c": round(float(row["heat_index_c"]), 1),
+            "swbgt_c": round(float(row["swbgt_c"]), 1),
+            "solar_radiation_wm2": round(float(row.get("solar_radiation_wm2", 0.0)), 1),
+            "wind_speed_ms": round(float(row.get("wind_speed_ms", 0.0)), 1)
+        })
+
+    return {
+        "station_id": location_key,
+        "location_name": loc_info["name"],
+        "data_source": "historical_benchmark",
+        "data_source_label": "Historical Baseline (NASA POWER / IMD Curated Benchmark)",
+        "timezone": "Asia/Kolkata",
+        "timezone_offset": "+05:30",
+        "hours": len(records),
+        "start_timestamp": records[0]["timestamp"] if records else None,
+        "end_timestamp": records[-1]["timestamp"] if records else None,
+        "series": records
+    }
+
 if __name__ == "__main__":
     config = load_config()
     for loc in config["locations"]:
         ingest_location(loc)
+

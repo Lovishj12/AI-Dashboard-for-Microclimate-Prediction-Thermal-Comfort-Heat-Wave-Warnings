@@ -5,32 +5,14 @@ CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
 
 DEFAULT_CONFIG = {
     "locations": {
-        "new_delhi": {
-            "name": "New Delhi (Safdarjung)",
-            "latitude": 28.6139,
-            "longitude": 77.2090,
-            "elevation_m": 216,
-            "climate_zone": "Composite / Semi-arid (Extreme Dry Heat)",
-            "imd_normal_max_t_may": 39.9,
-            "imd_normal_max_t_june": 39.2
-        },
         "kharagpur": {
-            "name": "Kharagpur (IIT Campus / WB)",
+            "name": "IIT Kharagpur (Paschim Medinipur, WB, India)",
             "latitude": 22.3149,
             "longitude": 87.3105,
             "elevation_m": 61,
             "climate_zone": "Tropical Wet & Dry (Humid Heat Stress)",
             "imd_normal_max_t_may": 37.1,
             "imd_normal_max_t_june": 35.4
-        },
-        "ahmedabad": {
-            "name": "Ahmedabad",
-            "latitude": 23.0225,
-            "longitude": 72.5714,
-            "elevation_m": 53,
-            "climate_zone": "Hot Semi-Arid (Severe Heat Wave Zone)",
-            "imd_normal_max_t_may": 41.6,
-            "imd_normal_max_t_june": 38.7
         }
     },
     "data_pipeline": {

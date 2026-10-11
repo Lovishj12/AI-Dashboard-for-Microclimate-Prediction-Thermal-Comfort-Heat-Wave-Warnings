@@ -22,7 +22,7 @@ class TestBaselineModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = load_config()
-        cls.csv_path = Path(cls.config["data_pipeline"]["processed_dir"]) / "enriched" / "new_delhi_enriched_hourly.csv"
+        cls.csv_path = Path(cls.config["data_pipeline"]["processed_dir"]) / "enriched" / "kharagpur_enriched_hourly.csv"
         cls.df = pd.read_csv(cls.csv_path, index_col="timestamp_utc", parse_dates=True)
         
     def test_feature_engineering_integrity(self):
@@ -52,7 +52,7 @@ class TestBaselineModel(unittest.TestCase):
         self.assertGreater(len(test), 2000)
 
     def test_model_artifact_reload_and_inference(self):
-        artifact_path = MODELS_DIR / "new_delhi_baseline_ridge_h1.joblib"
+        artifact_path = MODELS_DIR / "kharagpur_baseline_ridge_h1.joblib"
         self.assertTrue(artifact_path.exists(), f"Artifact not found: {artifact_path}")
         
         artifact = joblib.load(artifact_path)

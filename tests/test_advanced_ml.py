@@ -31,8 +31,8 @@ class TestAdvancedML(unittest.TestCase):
                 self.assertTrue(p.exists(), f"Champion artifact missing: {p}")
                 
     def test_champion_artifact_structure_and_inference(self):
-        # Test New Delhi h=1
-        champ_path = CHAMPION_MODELS_DIR / "new_delhi_champion_h1.joblib"
+        # Test Kharagpur h=1
+        champ_path = CHAMPION_MODELS_DIR / "kharagpur_champion_h1.joblib"
         artifact = joblib.load(champ_path)
         
         self.assertIn("model_type", artifact)

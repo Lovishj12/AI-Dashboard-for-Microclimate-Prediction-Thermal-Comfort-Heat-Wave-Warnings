@@ -116,7 +116,7 @@ def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
         "R2": round(float(r2), 4)
     }
 
-def train_and_evaluate_baselines(location_key: str = "new_delhi", horizon: int = 1) -> Dict:
+def train_and_evaluate_baselines(location_key: str = "kharagpur", horizon: int = 1) -> Dict:
     """
     Trains Baseline Ridge regression and compares against Naive Persistence benchmarks
     for horizon h (e.g. 1 hour ahead or 6 hours ahead).

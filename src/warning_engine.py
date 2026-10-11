@@ -379,7 +379,7 @@ if __name__ == "__main__":
     res = engine.generate_comprehensive_warning(
         temperature_c=46.2,
         relative_humidity_pct=35.0,
-        location_key="new_delhi"
+        location_key="kharagpur"
     )
     print("Overall Warning Level:", res["overall_level"])
     print("Primary Triggers:", json.dumps(res["explainability"]["primary_triggers"], indent=2))
