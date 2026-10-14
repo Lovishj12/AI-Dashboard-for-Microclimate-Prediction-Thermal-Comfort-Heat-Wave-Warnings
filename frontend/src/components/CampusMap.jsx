@@ -69,19 +69,13 @@ function getContinuousThermalColor(val, minVal, maxVal) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
+export default function CampusMap({ selectedBuildingId, onSelectBuilding, mode = 'ai' }) {
   const [geoData, setGeoData] = useState(null);
   const [microclimateData, setMicroclimateData] = useState(null);
 
   // Layer modes: 'surface_temp', 'air_temp', 'thermal_comfort', 'temp_delta', 'vulnerability', 'category'
   const [layerMode, setLayerMode] = useState('surface_temp');
   const [forecastHorizon, setForecastHorizon] = useState('current'); // 'current', '1', '3', '6', '24'
-
-  // 24-Hour Diurnal Time Animation State
-  const [diurnalTimeline, setDiurnalTimeline] = useState(null);
-  const [diurnalHour, setDiurnalHour] = useState(14); // Default to peak afternoon 14:00
-  const [isPlayingDiurnal, setIsPlayingDiurnal] = useState(false);
-  const [useDiurnalMode, setUseDiurnalMode] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -90,28 +84,24 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
   const campusCenter = [22.3175, 87.3085];
   const defaultZoom = 15;
 
-  // Fetch campus building spatial data and diurnal simulation dataset
+  // Fetch campus building spatial data and current downscaled microclimate
   useEffect(() => {
     async function fetchCampusData() {
       try {
         setLoading(true);
-        const [geoRes, microRes, diurnalRes] = await Promise.all([
+        const [geoRes, microRes] = await Promise.all([
           fetch('http://127.0.0.1:8000/api/campus/buildings'),
-          fetch('http://127.0.0.1:8000/api/campus/microclimate/current'),
-          fetch('http://127.0.0.1:8000/api/campus/diurnal'),
+          fetch(`http://127.0.0.1:8000/api/campus/microclimate/current?mode=${mode}`),
         ]);
 
         if (!geoRes.ok) throw new Error(`GeoJSON fetch failed: HTTP ${geoRes.status}`);
         if (!microRes.ok) throw new Error(`Microclimate fetch failed: HTTP ${microRes.status}`);
-        if (!diurnalRes.ok) throw new Error(`Diurnal fetch failed: HTTP ${diurnalRes.status}`);
 
         const geo = await geoRes.json();
         const micro = await microRes.json();
-        const diurnal = await diurnalRes.json();
 
         setGeoData(geo);
         setMicroclimateData(micro);
-        setDiurnalTimeline(diurnal);
       } catch (err) {
         console.error('Error fetching campus spatial data:', err);
         setError(err.message);
@@ -120,11 +110,10 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
       }
     }
     fetchCampusData();
-  }, []);
+  }, [mode]);
 
-  // Update microclimate data when horizon changes (if not in diurnal mode)
+  // Update microclimate data when forecast horizon changes
   useEffect(() => {
-    if (useDiurnalMode) return;
     async function fetchForecast() {
       try {
         const microUrl =
@@ -141,26 +130,12 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
       }
     }
     fetchForecast();
-  }, [forecastHorizon, useDiurnalMode]);
+  }, [forecastHorizon]);
 
-  // Handle Diurnal Time Slider Playback Animation
-  useEffect(() => {
-    let timer;
-    if (isPlayingDiurnal && useDiurnalMode) {
-      timer = setInterval(() => {
-        setDiurnalHour((prev) => (prev + 1) % 24);
-      }, 1000); // Step 1 hour every second
-    }
-    return () => clearInterval(timer);
-  }, [isPlayingDiurnal, useDiurnalMode]);
-
-  // Compute active buildings dataset depending on mode
+  // Compute active buildings dataset
   const activeBuildings = useMemo(() => {
-    if (useDiurnalMode && diurnalTimeline && diurnalTimeline[diurnalHour]) {
-      return diurnalTimeline[diurnalHour].buildings;
-    }
     return microclimateData?.buildings || [];
-  }, [useDiurnalMode, diurnalTimeline, diurnalHour, microclimateData]);
+  }, [microclimateData]);
 
   // Map building ID to its active microclimate state
   const microclimateMap = useMemo(() => {
@@ -229,6 +204,17 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
           status: 'Synthesized Vulnerability Score',
           note: 'Ranks physical risk and demographic non-AC heat vulnerability.',
         };
+      case 'ac_heat_rejection':
+        return {
+          title: 'AC Outdoor Heat Rejection (Q_reject = Q_cooling + P_electric)',
+          units: 'kW',
+          min: 0.0,
+          max: 1500.0,
+          source: 'Thermodynamic Energy Balance & IIT Kharagpur e-Procurement / HMC Policy Database',
+          resolution: 'Building Footprint Scale',
+          status: 'Documented & Benchmarked HVAC Engineering Model',
+          note: 'Total sensible and latent heat rejected into outdoor air by air-conditioning condenser banks.',
+        };
       case 'category':
       default:
         return {
@@ -247,7 +233,9 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
   // Color ramp resolver for a building feature
   const getFeatureColor = (feature) => {
     const bId = feature.properties.id;
-    const micro = microclimateMap[bId]?.microclimate;
+    const bObj = microclimateMap[bId];
+    const micro = bObj?.microclimate;
+    const ac = bObj?.ac_inventory;
     const cat = feature.properties.category;
 
     if (layerMode === 'category') {
@@ -257,6 +245,11 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
       if (cat === 'Water Body' || cat === 'Water/Nature') return '#06b6d4';
       if (cat === 'Roads/Corridor') return '#f97316';
       return '#3b82f6'; // Academic
+    }
+
+    if (layerMode === 'ac_heat_rejection') {
+      const q = ac ? ac.heat_rejection_kw : 0.0;
+      return getContinuousThermalColor(q, layerMeta.min, layerMeta.max);
     }
 
     if (layerMode === 'surface_temp') {
@@ -343,139 +336,47 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
 
         {/* Thematic Layer & AI Forecast Horizon Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
-          {/* Mode Switcher: AI Forecast vs Diurnal Animation */}
+          {/* AI Forecast Horizon Selector */}
           <div
             style={{
               display: 'flex',
+              alignItems: 'center',
               gap: '0.3rem',
               background: 'rgba(255,255,255,0.03)',
-              padding: '0.2rem',
+              padding: '0.25rem 0.4rem',
               borderRadius: '8px',
               border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <button
-              onClick={() => {
-                setUseDiurnalMode(false);
-                setIsPlayingDiurnal(false);
-              }}
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                padding: '0.25rem 0.6rem',
-                borderRadius: '6px',
-                background: !useDiurnalMode ? '#06b6d4' : 'transparent',
-                color: !useDiurnalMode ? '#0a0f1d' : '#94a3b8',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              AI Forecasts
-            </button>
-            <button
-              onClick={() => {
-                setUseDiurnalMode(true);
-              }}
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                padding: '0.25rem 0.6rem',
-                borderRadius: '6px',
-                background: useDiurnalMode ? '#ec4899' : 'transparent',
-                color: useDiurnalMode ? '#ffffff' : '#94a3b8',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              24h Diurnal Animation
-            </button>
-          </div>
-
-          {/* AI Horizon Selector (When not in diurnal mode) */}
-          {!useDiurnalMode && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                background: 'rgba(255,255,255,0.03)',
-                padding: '0.25rem 0.4rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginRight: '0.2rem' }}>
-                Timeline:
-              </span>
-              {[
-                { id: 'current', label: 'Now' },
-                { id: '1', label: '+1h' },
-                { id: '3', label: '+3h' },
-                { id: '6', label: '+6h' },
-                { id: '24', label: '+24h' },
-              ].map((h) => (
-                <button
-                  key={h.id}
-                  onClick={() => setForecastHorizon(h.id)}
-                  style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 600,
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '5px',
-                    background: forecastHorizon === h.id ? '#06b6d4' : 'transparent',
-                    color: forecastHorizon === h.id ? '#0a0f1d' : '#94a3b8',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {h.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* 24-Hour Diurnal Playback Controls (When in diurnal mode) */}
-          {useDiurnalMode && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                background: 'rgba(236, 72, 153, 0.1)',
-                padding: '0.25rem 0.6rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(236, 72, 153, 0.3)',
-              }}
-            >
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginRight: '0.2rem' }}>
+              Forecast Horizon:
+            </span>
+            {[
+              { id: 'current', label: 'Now' },
+              { id: '1', label: '+1h' },
+              { id: '3', label: '+3h' },
+              { id: '6', label: '+6h' },
+              { id: '24', label: '+24h' },
+            ].map((h) => (
               <button
-                onClick={() => setIsPlayingDiurnal(!isPlayingDiurnal)}
+                key={h.id}
+                onClick={() => setForecastHorizon(h.id)}
                 style={{
-                  background: '#ec4899',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '0.2rem 0.6rem',
                   fontSize: '0.72rem',
-                  fontWeight: 700,
+                  fontWeight: 600,
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '5px',
+                  background: forecastHorizon === h.id ? '#06b6d4' : 'transparent',
+                  color: forecastHorizon === h.id ? '#0a0f1d' : '#94a3b8',
+                  border: 'none',
                   cursor: 'pointer',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                {isPlayingDiurnal ? '⏸ Pause' : '▶ Play 24h'}
+                {h.label}
               </button>
-              <input
-                type="range"
-                min="0"
-                max="23"
-                value={diurnalHour}
-                onChange={(e) => setDiurnalHour(parseInt(e.target.value))}
-                style={{ width: '100px', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f8fafc', minWidth: '45px' }}>
-                {diurnalHour.toString().padStart(2, '0')}:00 IST
-              </span>
-            </div>
-          )}
+            ))}
+          </div>
 
           {/* 5-Category Selectable Thermal Layer Switcher */}
           <div
@@ -510,6 +411,7 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding }) {
               <option value="thermal_comfort">Thermal Comfort (NOAA Heat Index °C)</option>
               <option value="temp_delta">UHI Microclimate Anomaly (ΔT °C)</option>
               <option value="vulnerability">Heat Vulnerability Index (0-100)</option>
+              <option value="ac_heat_rejection">AC Outdoor Heat Rejection (Q_reject kW)</option>
               <option value="category">Campus Land-Use Typology</option>
             </select>
           </div>

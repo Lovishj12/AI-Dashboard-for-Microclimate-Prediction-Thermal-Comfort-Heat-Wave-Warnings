@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-export default function BuildingInspector({ buildingId, onClose }) {
+export default function BuildingInspector({ buildingId, mode = 'ai', onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -8,7 +8,7 @@ export default function BuildingInspector({ buildingId, onClose }) {
   useEffect(() => {
     if (!buildingId) return;
     setLoading(true);
-    fetch(`http://127.0.0.1:8000/api/campus/building/${buildingId}`)
+    fetch(`http://127.0.0.1:8000/api/campus/building/${buildingId}?mode=${mode}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Building not found: ${res.status}`);
         return res.json();
@@ -22,7 +22,7 @@ export default function BuildingInspector({ buildingId, onClose }) {
         setError(err.message);
         setLoading(false);
       });
-  }, [buildingId]);
+  }, [buildingId, mode]);
 
   if (!buildingId) return null;
 
@@ -303,6 +303,94 @@ export default function BuildingInspector({ buildingId, onClose }) {
                   {data.properties.vulnerability_baseline}
                 </span>
               </div>
+            </div>
+
+            {/* Column 4: HVAC & Anthropogenic Waste-Heat Rejection */}
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase' }}>
+                  4. HVAC & Waste Heat
+                </div>
+                {data.ac_inventory?.evidence_tier && (
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      textTransform: 'uppercase',
+                      backgroundColor:
+                        data.ac_inventory.evidence_tier === 'Verified'
+                          ? 'rgba(16, 185, 129, 0.2)'
+                          : data.ac_inventory.evidence_tier === 'Documented'
+                          ? 'rgba(59, 130, 246, 0.2)'
+                          : 'rgba(245, 158, 11, 0.2)',
+                      color:
+                        data.ac_inventory.evidence_tier === 'Verified'
+                          ? '#10b981'
+                          : data.ac_inventory.evidence_tier === 'Documented'
+                          ? '#60a5fa'
+                          : '#f59e0b',
+                      border: `1px solid ${
+                        data.ac_inventory.evidence_tier === 'Verified'
+                          ? 'rgba(16, 185, 129, 0.4)'
+                          : data.ac_inventory.evidence_tier === 'Documented'
+                          ? 'rgba(59, 130, 246, 0.4)'
+                          : 'rgba(245, 158, 11, 0.4)'
+                      }`,
+                    }}
+                  >
+                    {data.ac_inventory.evidence_tier}
+                  </span>
+                )}
+              </div>
+
+              {data.ac_inventory ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.4rem' }}>
+                    <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Heat Rejection (Q_reject):</span>
+                    <strong style={{ fontSize: '1.05rem', color: '#f59e0b' }}>
+                      {(data.ac_inventory.heat_rejection_kw ?? data.ac_inventory.q_reject_kw ?? 0).toFixed(1)} kW
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.82rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Installed Cooling:</span>
+                    <strong style={{ color: '#f8fafc' }}>
+                      {data.ac_inventory.cooling_capacity_tons_tr ?? data.ac_inventory.rated_cooling_capacity_tr ?? 0} TR ({((data.ac_inventory.cooling_capacity_tons_tr ?? data.ac_inventory.rated_cooling_capacity_tr ?? 0) * 3.51685).toFixed(0)} kW)
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.82rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Active Electrical Draw:</span>
+                    <strong style={{ color: '#38bdf8' }}>
+                      {(data.ac_inventory.electrical_input_kw ?? data.ac_inventory.p_electric_active_kw ?? 0).toFixed(1)} kW
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.82rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Anthropogenic Flux:</span>
+                    <strong style={{ color: '#ec4899' }}>
+                      {(data.ac_inventory.anthropogenic_flux_wm2 ?? data.ac_inventory.anthropogenic_heat_flux_w_m2 ?? 0).toFixed(1)} W/m²
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.82rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Equipment Type:</span>
+                    <span style={{ color: '#cbd5e1', fontSize: '0.76rem', maxWidth: '140px', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {data.ac_inventory.primary_hvac_type || data.ac_inventory.hvac_system_type || 'Split / Window Units'}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.4rem', paddingTop: '0.3rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span>Source: {data.ac_inventory.source_document || data.ac_inventory.data_source || 'ECBC 2017 Benchmark'}</span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', padding: '0.5rem 0' }}>
+                  No AC inventory record available for this building footprint.
+                </div>
+              )}
             </div>
           </div>
 

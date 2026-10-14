@@ -37,6 +37,8 @@ from src.warning_engine import AdvancedWarningEngine
 from src.campus_microclimate import CampusMicroclimateEngine
 from src.campus_forecast import CampusSpatialForecastEngine
 from src.campus_vulnerability import CampusVulnerabilityEngine
+from src.campus_ac_inventory import CAMPUS_AC_ENGINE
+from src.real_data_service import REAL_DATA_SERVICE
 
 CONFIG = load_config()
 WARNING_ENGINE = AdvancedWarningEngine(CONFIG)
@@ -179,10 +181,14 @@ def get_campus_all_footprints():
 
 
 @app.get("/api/campus/building/{building_id}")
-def get_campus_building_detail(building_id: str):
+def get_campus_building_detail(
+    building_id: str,
+    mode: str = Query("ai", description="Data mode: 'ai' or 'real'")
+):
     """
     Returns verified spatial and physical metadata for a specific campus building or precinct,
     including downscaled baseline microclimate profile and vulnerability metrics.
+    Supports mode switch ('ai' vs 'real').
     """
     geojson_path = Path("data/iit_kgp_campus.geojson")
     if not geojson_path.exists():
@@ -201,12 +207,20 @@ def get_campus_building_detail(building_id: str):
     if not target_feature:
         raise HTTPException(status_code=404, detail=f"Building '{building_id}' not found in campus registry")
 
-    # Fetch latest regional Kharagpur meteorological observation
-    df = get_station_dataframe("kharagpur")
-    latest_row = df.iloc[-1]
-    regional_t = float(latest_row["temperature_c"])
-    regional_rh = float(latest_row["relative_humidity_pct"])
-    regional_ws = float(latest_row.get("wind_speed_ms", 2.0))
+    # Fetch regional Kharagpur meteorological observation based on mode
+    if mode.lower() == "real":
+        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+        regional_t = float(real_obs["air_temperature_c"])
+        regional_rh = float(real_obs["relative_humidity_pct"])
+        regional_ws = float(real_obs["wind_speed_ms"])
+        regional_solar = float(real_obs.get("solar_radiation_wm2", 500.0))
+    else:
+        df = get_station_dataframe("kharagpur")
+        latest_row = df.iloc[-1]
+        regional_t = float(latest_row["temperature_c"])
+        regional_rh = float(latest_row["relative_humidity_pct"])
+        regional_ws = float(latest_row.get("wind_speed_ms", 2.0))
+        regional_solar = float(latest_row.get("solar_radiation_wm2", 500.0))
 
     props = target_feature["properties"]
     albedo = float(props.get("albedo", 0.25))
@@ -249,12 +263,20 @@ def get_campus_building_detail(building_id: str):
     , 1)))
 
     # Physical Land Surface Temperature (LST / Rooftop Skin Temp) based on surface energy balance
-    regional_solar = float(latest_row.get("solar_radiation_wm2", 500.0))
     h_conv = max(8.0, 10.0 + 3.8 * max(0.5, regional_ws))
     net_solar_absorbed = (1.0 - albedo) * regional_solar
     surface_delta_t = net_solar_absorbed / h_conv - (veg_frac * 2.5)
     surface_delta_t = surface_delta_t * (0.6 + 0.6 * imp_frac)
     local_surface_t = round(local_t + max(-1.0, min(14.0, surface_delta_t * 0.45)), 1)
+
+    # Building AC Inventory Profile & Thermodynamic Waste Heat Evaluation
+    area_sqm = float(props.get("area_sqm", 5000.0))
+    ac_profile = CAMPUS_AC_ENGINE.calculate_building_heat_rejection(
+        building_id=building_id,
+        operating_scenario="nominal",
+        ambient_temperature_c=regional_t,
+        footprint_area_sqm=area_sqm
+    )
 
     return {
         "building_id": building_id,
@@ -283,6 +305,24 @@ def get_campus_building_detail(building_id: str):
             "vulnerability_index_score": vuln_score,
             "risk_status": classify_heat_index(local_hi),
         },
+        "ac_inventory": {
+            "evidence_tier": ac_profile["evidence_tier"],
+            "primary_hvac_type": ac_profile["primary_hvac_type"],
+            "ac_unit_count_confirmed": ac_profile["ac_unit_count_confirmed"],
+            "ac_unit_count_estimated": ac_profile["ac_unit_count_estimated"],
+            "condenser_count_estimated": ac_profile["condenser_count_estimated"],
+            "cooling_capacity_tons_tr": ac_profile["cooling_capacity_tons_tr"],
+            "rated_cooling_capacity_kw": ac_profile["rated_cooling_capacity_kw"],
+            "heat_rejection_kw": ac_profile["heat_rejection_kw"],
+            "electrical_input_kw": ac_profile["electrical_input_kw"],
+            "anthropogenic_flux_wm2": ac_profile["anthropogenic_flux_wm2"],
+            "condenser_placement": ac_profile["condenser_placement"],
+            "operating_schedule": ac_profile["operating_schedule"],
+            "source_document": ac_profile["source_document"],
+            "source_url": ac_profile["source_url"],
+            "observation_date": ac_profile["observation_date"],
+            "microclimatic_canyon_impact": ac_profile["microclimatic_canyon_impact"]
+        },
         "scientific_rationale": (
             f"Local air delta of {temp_delta:+.2f}°C driven by surface albedo α={albedo}, "
             f"vegetation fraction f_v={(veg_frac*100):.0f}%, impervious surface f_i={(imp_frac*100):.0f}%, "
@@ -292,11 +332,32 @@ def get_campus_building_detail(building_id: str):
 
 
 @app.get("/api/campus/microclimate/current")
-def get_campus_microclimate_current():
+def get_campus_microclimate_current(
+    mode: str = Query("ai", description="Data mode: 'ai' (AI Prediction / Curated Benchmark) or 'real' (Live Open-Meteo Observations)")
+):
     """
-    Downscales real-time / latest Kharagpur regional meteorological observations
+    Downscales real-time or benchmark Kharagpur regional meteorological observations
     across all 24 verified campus buildings and spatial precincts concurrently.
+    Supports seamless global toggle between AI Prediction Mode and Real Data Mode.
     """
+    if mode.lower() == "real":
+        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+        regional_t = float(real_obs["air_temperature_c"])
+        regional_rh = float(real_obs["relative_humidity_pct"])
+        regional_ws = float(real_obs["wind_speed_ms"])
+        regional_solar = float(real_obs["solar_radiation_wm2"])
+        eval_result = CAMPUS_MICROCLIMATE_ENGINE.evaluate_all_buildings(
+            regional_temperature_c=regional_t,
+            regional_relative_humidity_pct=regional_rh,
+            regional_wind_speed_ms=regional_ws,
+            regional_solar_radiation_wm2=regional_solar
+        )
+        eval_result["data_mode"] = "real"
+        if "regional_reference" in eval_result:
+            eval_result["regional_reference"]["source"] = "Open-Meteo High-Res & IMD Synoptic Net (Live Telemetry)"
+            eval_result["regional_reference"]["observation_timestamp"] = real_obs["timestamp"]
+        return eval_result
+
     df = get_station_dataframe("kharagpur")
     latest_row = df.iloc[-1]
     regional_t = float(latest_row["temperature_c"])
@@ -304,12 +365,14 @@ def get_campus_microclimate_current():
     regional_ws = float(latest_row.get("wind_speed_ms", 2.0))
     regional_solar = float(latest_row.get("solar_radiation_wm2", 500.0))
 
-    return CAMPUS_MICROCLIMATE_ENGINE.evaluate_all_buildings(
+    eval_result = CAMPUS_MICROCLIMATE_ENGINE.evaluate_all_buildings(
         regional_temperature_c=regional_t,
         regional_relative_humidity_pct=regional_rh,
         regional_wind_speed_ms=regional_ws,
         regional_solar_radiation_wm2=regional_solar
     )
+    eval_result["data_mode"] = "ai"
+    return eval_result
 
 @app.get("/api/campus/forecast")
 def get_campus_forecast_all_horizons():
@@ -332,26 +395,6 @@ def get_campus_forecast_horizon(horizon_hours: int):
     df = get_station_dataframe("kharagpur")
     recent_slice = df.iloc[-60:].copy()
     return CAMPUS_FORECAST_ENGINE.generate_spatial_forecast(recent_slice, horizon_hours=horizon_hours)
-
-@app.get("/api/campus/diurnal")
-def get_campus_diurnal_cycle():
-    """
-    Delivers full 24-hour diurnal microclimate evolution across all 24 campus buildings,
-    capturing morning solar buildup, peak midday UHI, and nocturnal thermal inertia.
-    """
-    df = get_station_dataframe("kharagpur")
-    recent_slice = df.iloc[-24:]
-    t_max = float(recent_slice["temperature_c"].max())
-    t_min = float(recent_slice["temperature_c"].min())
-    rh_max = float(recent_slice["relative_humidity_pct"].max())
-    rh_min = float(recent_slice["relative_humidity_pct"].min())
-
-    return CAMPUS_MICROCLIMATE_ENGINE.evaluate_diurnal_cycle(
-        base_t_max_c=t_max,
-        base_t_min_c=t_min,
-        base_rh_max_pct=rh_max,
-        base_rh_min_pct=rh_min
-    )
 
 @app.get("/api/campus/heatwave")
 def get_campus_heat_wave_scenario(
@@ -395,12 +438,114 @@ def get_campus_vulnerability_profile():
 
     return CAMPUS_VULNERABILITY_ENGINE.evaluate_campus_vulnerability(current_eval["buildings"])
 
+@app.get("/api/campus/ac-inventory")
+def get_campus_ac_inventory(
+    scenario: str = Query("nominal", description="Operating scenario: peak, nominal, reduced, zero")
+):
+    """
+    Delivers building-level air-conditioning inventory, cooling capacities, electrical inputs,
+    and thermodynamic outdoor heat rejection (Q_reject = Q_cooling + P_electric) across IIT Kharagpur.
+    """
+    df = get_station_dataframe("kharagpur")
+    latest_row = df.iloc[-1]
+    ambient_t = float(latest_row["temperature_c"])
+
+    features = CAMPUS_MICROCLIMATE_ENGINE.geojson_data.get("features", [])
+    ac_eval = CAMPUS_AC_ENGINE.evaluate_all_campus_ac_rejection(
+        operating_scenario=scenario,
+        ambient_temperature_c=ambient_t,
+        building_features=features
+    )
+    ac_eval["tier"] = "Documented & Benchmarked (Thermodynamic Rejection Modeling)"
+    return ac_eval
+
+@app.get("/api/campus/building/{building_id}/ac-profile")
+def get_single_building_ac_profile(
+    building_id: str,
+    scenario: str = Query("nominal", description="Operating scenario: peak, nominal, reduced, zero")
+):
+    """
+    Returns granular HVAC equipment, nameplate ratings, condenser placement,
+    and outdoor sensible heat rejection for a specific campus building.
+    """
+    df = get_station_dataframe("kharagpur")
+    latest_row = df.iloc[-1]
+    ambient_t = float(latest_row["temperature_c"])
+
+    # Find building area from geojson
+    area = 5000.0
+    for feat in CAMPUS_MICROCLIMATE_ENGINE.geojson_data.get("features", []):
+        if feat.get("properties", {}).get("id") == building_id:
+            area = float(feat.get("properties", {}).get("area_sqm", 5000.0))
+            break
+
+    profile = CAMPUS_AC_ENGINE.calculate_building_heat_rejection(
+        building_id=building_id,
+        operating_scenario=scenario,
+        ambient_temperature_c=ambient_t,
+        footprint_area_sqm=area
+    )
+    if profile.get("evidence_tier") == "Unknown":
+        raise HTTPException(status_code=404, detail=f"Building '{building_id}' not found in AC database.")
+
+    profile["tier"] = "Documented & Benchmarked (Thermodynamic Energy Balance)"
+    return profile
+
 @app.get("/api/current/{station_id}")
-def get_current_conditions(station_id: str):
+def get_current_conditions(
+    station_id: str,
+    mode: str = Query("ai", description="Data mode: 'ai' (AI Prediction / Benchmark) or 'real' (Trusted Live Observations)")
+):
     """
     Returns latest telemetry, complete thermodynamic state,
     and synthesized warning evaluation for a station.
+    Supports seamless global toggle between AI Prediction Mode and Real Data Mode.
     """
+    if mode.lower() == "real":
+        # Fetch actual real-time weather observation from configured trusted external provider
+        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+        t = real_obs["air_temperature_c"]
+        rh = real_obs["relative_humidity_pct"]
+        ws = real_obs["wind_speed_ms"]
+        p = real_obs["surface_pressure_hpa"]
+        solar = real_obs["solar_radiation_wm2"]
+        obs_time = real_obs["timestamp"]
+
+        warning_eval = WARNING_ENGINE.generate_comprehensive_warning(
+            temperature_c=t,
+            relative_humidity_pct=rh,
+            location_key=station_id,
+            wind_speed_ms=ws,
+            surface_pressure_hpa=p,
+            solar_radiation_wm2=solar,
+            is_forecast=False,
+            horizon_hours=0
+        )
+
+        return {
+            "station_id": station_id,
+            "station_name": CONFIG["locations"].get(station_id, {}).get("name", "IIT Kharagpur"),
+            "data_mode": "real",
+            "data_mode_label": "Real Data Mode (Observed Live Telemetry)",
+            "timestamp_utc": obs_time,
+            "observation_timestamp_ist": obs_time,
+            "retrieval_timestamp_ist": real_obs["retrieval_timestamp"],
+            "air_temperature_c": round(t, 2),
+            "relative_humidity_pct": round(rh, 1),
+            "wind_speed_ms": round(ws, 1),
+            "wind_direction_deg": real_obs["wind_direction_deg"],
+            "surface_pressure_hpa": round(p, 1),
+            "solar_radiation_wm2": round(solar, 1),
+            "rainfall_mm": real_obs["rainfall_mm"],
+            "source_name": real_obs["source_name"],
+            "spatial_resolution": real_obs["spatial_resolution"],
+            "temporal_resolution": real_obs["temporal_resolution"],
+            "data_status": real_obs["data_status"],
+            "quality_flags": real_obs["quality_flags"],
+            "status": warning_eval
+        }
+
+    # AI Prediction Mode (Existing trained models & curated historical benchmark)
     df = get_station_dataframe(station_id)
     latest_row = df.iloc[-1]
     
@@ -424,22 +569,45 @@ def get_current_conditions(station_id: str):
     return {
         "station_id": station_id,
         "station_name": CONFIG["locations"][station_id]["name"],
+        "data_mode": "ai",
+        "data_mode_label": "AI Prediction Mode (Champion ML Model & Curated Benchmark)",
         "timestamp_utc": str(df.index[-1]),
         "wind_speed_ms": round(ws, 1),
         "surface_pressure_hpa": round(p, 1),
         "solar_radiation_wm2": round(solar, 1),
+        "source_name": "NASA POWER / IMD Curated Benchmark & Champion ML Regressors",
+        "spatial_resolution": "0.5° x 0.5° synoptic grid downscaled to campus",
+        "temporal_resolution": "Hourly",
+        "data_status": {
+            "temperature": "AI Prediction / Baseline Model",
+            "relative_humidity": "AI Prediction / Baseline Model",
+            "surface_pressure": "Observed (NASA POWER)",
+            "wind": "Observed (NASA POWER)",
+            "wet_bulb": "Calculated (Stull 2011)",
+            "heat_index": "Calculated (NOAA Rothfusz)",
+            "swbgt": "Calculated (Australian BoM)"
+        },
+        "quality_flags": ["TRAINED_VALIDATED", "HISTORICAL_BASELINE"],
         "status": warning_eval
     }
 
 @app.get("/api/forecast/{station_id}")
-def get_multi_horizon_forecast(station_id: str):
+def get_multi_horizon_forecast(
+    station_id: str,
+    mode: str = Query("ai", description="Data mode: 'ai' (AI ML Prediction) or 'real' (Trusted NWP Forecast)")
+):
     """
-    Computes AI champion predictions for t+1h, t+3h, t+6h, and t+24h
-    with projected warning classifications and physical trajectories.
+    Computes predictions for t+1h, t+3h, t+6h, and t+24h.
+    In 'ai' mode: evaluates champion HistGradientBoosting/Ridge models trained on Kharagpur.
+    In 'real' mode: evaluates high-resolution NWP weather model forecast from Open-Meteo/ECMWF.
     """
+    if mode.lower() == "real":
+        return REAL_DATA_SERVICE.fetch_live_forecast_horizons()
+
     df = get_station_dataframe(station_id)
     recent_slice = df.iloc[-60:].copy()  # Send recent 60-hour window
     forecast_result = WARNING_ENGINE.generate_multi_horizon_forecast(station_id, recent_slice)
+    forecast_result["data_mode"] = "ai"
     return forecast_result
 
 @app.get("/api/history/{station_id}")
@@ -473,7 +641,10 @@ def get_historical_timeseries(
 
 
 @app.get("/api/psychrometrics/{station_id}")
-def get_psychrometric_chart_data(station_id: str):
+def get_psychrometric_chart_data(
+    station_id: str,
+    mode: str = Query("ai", description="Data mode: 'ai' or 'real'")
+):
     """
     Delivers exact coordinate curves for web-based interactive rendering:
     - Saturation curve (100% RH)
@@ -481,7 +652,7 @@ def get_psychrometric_chart_data(station_id: str):
     - Wet-Bulb lines
     - ASHRAE 55 Summer Comfort Polygon vertices
     - Plotted empirical observations (last 168 hours / 7 days)
-    - Current state point coordinate
+    - Current state point coordinate (driven by active mode: AI vs Real)
     """
     p_hpa = STANDARD_PRESSURE_HPA
     t_grid = np.linspace(0.0, 50.0, 100)
@@ -520,22 +691,42 @@ def get_psychrometric_chart_data(station_id: str):
             "twb": round(float(row["wet_bulb_c"]), 1)
         })
 
-    # 4. Current State
-    latest = df.iloc[-1]
-    current_pt = {
-        "t": round(float(latest["temperature_c"]), 1),
-        "w": round(float(latest["humidity_ratio_g_kg"]), 2),
-        "hi": round(float(latest["heat_index_c"]), 1),
-        "twb": round(float(latest["wet_bulb_c"]), 1)
-    }
+    # 4. Current State point depending on mode
+    if mode.lower() == "real":
+        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+        current_pt = {
+            "t": round(float(real_obs["air_temperature_c"]), 1),
+            "w": round(float(real_obs["humidity_ratio_g_kg"]), 2),
+            "hi": round(float(real_obs["heat_index_c"]), 1),
+            "twb": round(float(real_obs["wet_bulb_c"]), 1),
+            "provenance": "Observed Live Telemetry (Open-Meteo / IMD)"
+        }
+    else:
+        latest = df.iloc[-1]
+        current_pt = {
+            "t": round(float(latest["temperature_c"]), 1),
+            "w": round(float(latest["humidity_ratio_g_kg"]), 2),
+            "hi": round(float(latest["heat_index_c"]), 1),
+            "twb": round(float(latest["wet_bulb_c"]), 1),
+            "provenance": "AI Prediction / Baseline Curated State"
+        }
 
     return {
+        "data_mode": mode.lower(),
         "pressure_hpa": p_hpa,
         "rh_curves": rh_curves,
         "comfort_polygon": comfort_polygon,
         "current_point": current_pt,
         "recent_points": recent_points
     }
+
+@app.get("/api/data/sources/status")
+def get_data_sources_status():
+    """
+    Returns live health, latency, and operational coverage of all external
+    weather data providers (Open-Meteo, IMD, NASA POWER).
+    """
+    return REAL_DATA_SERVICE.get_sources_status()
 
 @app.post("/api/calculate")
 def run_custom_calculation(req: CustomCalculationRequest):

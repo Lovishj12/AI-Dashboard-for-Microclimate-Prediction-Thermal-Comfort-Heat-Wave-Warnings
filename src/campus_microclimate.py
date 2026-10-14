@@ -34,6 +34,7 @@ from src.scientific_engine import (
     humidity_ratio,
     dew_point_temperature
 )
+from src.campus_ac_inventory import CAMPUS_AC_ENGINE
 
 DATA_PATH = Path("data/iit_kgp_campus.geojson")
 
@@ -43,7 +44,8 @@ def compute_building_microclimate_delta(
     impervious_fraction: float,
     sky_view_factor: float,
     solar_radiation_wm2: float = 500.0,
-    wind_speed_ms: float = 2.0
+    wind_speed_ms: float = 2.0,
+    anthropogenic_heat_flux_wm2: float = 0.0
 ) -> Dict[str, float]:
     """
     Computes local microclimate perturbation deltas (ΔT and ΔRH) relative to regional station.
@@ -53,6 +55,7 @@ def compute_building_microclimate_delta(
     - Vegetation cooling: ΔT_veg = - (f_v - 0.25) * 2.4 (evapotranspirative flux)
     - Impervious heat storage: ΔT_imp = (f_i - 0.50) * 1.6 (thermal mass inertia)
     - Sky view factor: ΔT_svf = (SVF - 0.70) * 0.9 (solar exposure vs sky radiation exchange)
+    - Anthropogenic AC heat rejection: ΔT_anthro = min(0.85, (q_anthro / 150.0) * 0.40)
     - Wind ventilation factor: High wind reduces local microclimatic anomalies.
     """
     # Wind attenuation factor: anomalies diminish with strong convective mixing
@@ -63,14 +66,14 @@ def compute_building_microclimate_delta(
     delta_veg = - (vegetation_fraction - 0.25) * 2.4
     delta_imp = (impervious_fraction - 0.50) * 1.6
     delta_svf = (sky_view_factor - 0.70) * 0.9 * solar_scale
+    # Anthropogenic condenser heat rejection component (empirically bounded to realistic canopy delta)
+    delta_anthro = min(0.85, (max(0.0, anthropogenic_heat_flux_wm2) / 150.0) * 0.40)
 
-    raw_temp_delta = (delta_albedo + delta_veg + delta_imp + delta_svf) * wind_attenuation
+    raw_temp_delta = (delta_albedo + delta_veg + delta_imp + delta_svf + delta_anthro) * wind_attenuation
     # Clamp perturbation to physically observed urban canopy microclimate bounds [-3.5°C to +4.0°C]
     clamped_temp_delta = max(-3.5, min(4.0, raw_temp_delta))
 
     # RH perturbation: negative correlation with temperature + positive evapotranspiration from vegetation
-    # Psychrometric law: as air warms without added moisture, RH decreases ~ 1.5% per °C
-    # Transpiration contributes up to +3.5% RH in dense vegetation canopy
     rh_delta = (-1.4 * clamped_temp_delta) + (vegetation_fraction * 3.5)
     
     return {
@@ -81,6 +84,7 @@ def compute_building_microclimate_delta(
             "vegetation_effect": round(delta_veg * wind_attenuation, 2),
             "impervious_effect": round(delta_imp * wind_attenuation, 2),
             "svf_effect": round(delta_svf * wind_attenuation, 2),
+            "anthropogenic_ac_effect": round(delta_anthro * wind_attenuation, 2),
         }
     }
 
@@ -153,13 +157,23 @@ class CampusMicroclimateEngine:
             footfall = props.get("estimated_footfall", "Medium")
             vuln_base = props.get("vulnerability_baseline", "Medium")
 
+            # Retrieve building AC inventory profile and compute active heat rejection
+            area_sqm = float(props.get("area_sqm", 5000.0))
+            ac_rejection = CAMPUS_AC_ENGINE.calculate_building_heat_rejection(
+                building_id=b_id,
+                operating_scenario="nominal",
+                ambient_temperature_c=regional_temperature_c,
+                footprint_area_sqm=area_sqm
+            )
+
             deltas = compute_building_microclimate_delta(
                 albedo=albedo,
                 vegetation_fraction=veg_frac,
                 impervious_fraction=imp_frac,
                 sky_view_factor=svf,
                 solar_radiation_wm2=regional_solar_radiation_wm2,
-                wind_speed_ms=regional_wind_speed_ms
+                wind_speed_ms=regional_wind_speed_ms,
+                anthropogenic_heat_flux_wm2=ac_rejection["anthropogenic_flux_wm2"]
             )
 
             local_t = round(regional_temperature_c + deltas["temperature_delta_c"], 2)
@@ -181,14 +195,9 @@ class CampusMicroclimateEngine:
             )
 
             # Physical Land Surface Temperature (LST / Rooftop Skin Temp) based on surface energy balance
-            # Stefan-Boltzmann radiative equilibrium approximation:
-            # T_skin = T_air + ( (1 - albedo) * solar_radiation_wm2 - net_longwave ) / (h_c + h_r)
-            # where convective heat transfer coefficient h_c ~ 10 + 4 * wind_speed
             h_conv = max(8.0, 10.0 + 3.8 * max(0.5, regional_wind_speed_ms))
             net_solar_absorbed = (1.0 - albedo) * regional_solar_radiation_wm2
-            # Net radiative/convective surface temperature elevation above ambient air
             surface_delta_t = net_solar_absorbed / h_conv - (veg_frac * 2.5)
-            # Thermal mass factor from imperviousness
             surface_delta_t = surface_delta_t * (0.6 + 0.6 * imp_frac)
             surface_temp_c = round(local_t + max(-1.0, min(14.0, surface_delta_t * 0.45)), 1)
 
@@ -207,6 +216,23 @@ class CampusMicroclimateEngine:
                     "estimated_footfall": footfall,
                     "area_sqm": props.get("area_sqm"),
                     "floors": props.get("floors"),
+                },
+                "ac_inventory": {
+                    "evidence_tier": ac_rejection["evidence_tier"],
+                    "primary_hvac_type": ac_rejection["primary_hvac_type"],
+                    "ac_unit_count_confirmed": ac_rejection["ac_unit_count_confirmed"],
+                    "ac_unit_count_estimated": ac_rejection["ac_unit_count_estimated"],
+                    "condenser_count_estimated": ac_rejection["condenser_count_estimated"],
+                    "cooling_capacity_tons_tr": ac_rejection["cooling_capacity_tons_tr"],
+                    "rated_cooling_capacity_kw": ac_rejection["rated_cooling_capacity_kw"],
+                    "heat_rejection_kw": ac_rejection["heat_rejection_kw"],
+                    "electrical_input_kw": ac_rejection["electrical_input_kw"],
+                    "anthropogenic_flux_wm2": ac_rejection["anthropogenic_flux_wm2"],
+                    "condenser_placement": ac_rejection["condenser_placement"],
+                    "operating_schedule": ac_rejection["operating_schedule"],
+                    "source_document": ac_rejection["source_document"],
+                    "observation_date": ac_rejection["observation_date"],
+                    "microclimatic_canyon_impact": ac_rejection["microclimatic_canyon_impact"]
                 },
                 "microclimate": {
                     "tier": "Modelled / Estimated (Physics-Downscaled)",
@@ -260,63 +286,6 @@ class CampusMicroclimateEngine:
             },
             "buildings": building_results
         }
-
-    def evaluate_diurnal_cycle(
-        self,
-        base_t_max_c: float = 38.0,
-        base_t_min_c: float = 26.0,
-        base_rh_max_pct: float = 85.0,
-        base_rh_min_pct: float = 40.0
-    ) -> List[Dict[str, Any]]:
-        """
-        Simulates 24-hour diurnal microclimatic evolution (hour 00 to 23)
-        across all 24 IIT Kharagpur buildings based on idealized sinusoidal solar insolation
-        and thermal inertia physics.
-        """
-        import numpy as np
-
-        hours = list(range(24))
-        diurnal_timeline = []
-
-        for h in hours:
-            # Diurnal sinusoidal temperature curve (peak at ~14:00, trough at ~05:00)
-            t_rad = (h - 14.0) * (2.0 * np.pi / 24.0)
-            reg_t = round(((base_t_max_c + base_t_min_c) / 2.0) + ((base_t_max_c - base_t_min_c) / 2.0) * np.cos(t_rad), 2)
-
-            # Inverse diurnal RH curve (maximum in pre-dawn ~05:00, minimum at midday ~14:00)
-            reg_rh = round(((base_rh_max_pct + base_rh_min_pct) / 2.0) - ((base_rh_max_pct - base_rh_min_pct) / 2.0) * np.cos(t_rad), 1)
-
-            # Solar radiation curve: 0 at night (before 06:00 and after 18:00), peak at 12:00 (~850 W/m²)
-            if 6 <= h <= 18:
-                solar_wm2 = round(max(0.0, np.sin((h - 6.0) * np.pi / 12.0) * 850.0), 1)
-            else:
-                solar_wm2 = 0.0
-
-            wind_ms = 2.0 + 0.5 * np.sin(h * np.pi / 12.0)
-
-            step_eval = self.evaluate_all_buildings(
-                regional_temperature_c=reg_t,
-                regional_relative_humidity_pct=reg_rh,
-                regional_wind_speed_ms=wind_ms,
-                regional_solar_radiation_wm2=solar_wm2
-            )
-
-            diurnal_timeline.append({
-                "hour": h,
-                "hour_label": f"{h:02d}:00",
-                "is_daylight": 6 <= h <= 18,
-                "solar_radiation_wm2": solar_wm2,
-                "regional_reference": {
-                    "temperature_c": reg_t,
-                    "relative_humidity_pct": reg_rh,
-                    "wind_speed_ms": round(wind_ms, 1),
-                },
-                "tier": "Modelled / Estimated (Diurnal Cycle Simulation)",
-                "campus_summary": step_eval["campus_summary"],
-                "buildings": step_eval["buildings"]
-            })
-
-        return diurnal_timeline
 
     def evaluate_heat_wave_scenario(
         self,

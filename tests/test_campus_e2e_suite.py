@@ -106,21 +106,6 @@ def test_05_multi_horizon_spatial_forecasting():
     res_bad = client.get("/api/campus/forecast/12")
     assert res_bad.status_code == 400
 
-def test_06_diurnal_24h_cycle_physics():
-    """Verify GET /api/campus/diurnal models solar cycle with afternoon peak exceeding midnight."""
-    res = client.get("/api/campus/diurnal")
-    assert res.status_code == 200
-    data = res.json()
-    assert isinstance(data, list)
-    assert len(data) == 24
-
-    t_midnight = data[0]["regional_reference"]["temperature_c"]
-    t_afternoon = data[14]["regional_reference"]["temperature_c"]
-    assert t_afternoon > t_midnight, f"Afternoon ({t_afternoon}) must exceed midnight ({t_midnight})"
-    assert data[14]["is_daylight"] is True
-    assert data[2]["is_daylight"] is False
-    assert data[14]["campus_summary"]["thermal_delta_spread_c"] > 0.0
-
 def test_07_extreme_heat_wave_stress_scenarios():
     """Verify GET /api/campus/heatwave stresses campus across IMD heat wave tiers."""
     scenarios = ["imd_heat_wave", "imd_severe_heat_wave", "humid_heat_crisis", "dry_convective_blast"]
@@ -173,11 +158,6 @@ def test_09_academic_tier_labeling():
         assert any(keyword in tier_str for keyword in ["Ground-Truth", "Modelled", "Simulation", "Index"]), \
             f"Endpoint {ep} has improper tier: {tier_str}"
 
-    # Verify diurnal cycle steps declare academic tier
-    res_diurnal = client.get("/api/campus/diurnal")
-    assert res_diurnal.status_code == 200
-    assert "tier" in res_diurnal.json()[0]
-
     # Also verify building inspector contains tier in modelled_microclimate
     res_b = client.get("/api/campus/building/nalanda_complex")
     assert res_b.status_code == 200
@@ -223,7 +203,6 @@ def run_all_e2e_tests():
         ("Test 03: Building Inspector Envelope Thermodynamics", test_03_building_inspector_physics),
         ("Test 04: Spatial Microclimate Downscaling Engine", test_04_spatial_microclimate_downscaling),
         ("Test 05: Multi-Horizon ML Spatial Forecasting", test_05_multi_horizon_spatial_forecasting),
-        ("Test 06: Diurnal 24-Hour Solar Cycle Physics", test_06_diurnal_24h_cycle_physics),
         ("Test 07: Extreme Heat Wave Stress Testing (IMD Thresholds)", test_07_extreme_heat_wave_stress_scenarios),
         ("Test 08: Multi-Dimensional Campus Vulnerability Layer", test_08_campus_vulnerability_layer),
         ("Test 09: Academic Integrity Tier Labeling on All Endpoints", test_09_academic_tier_labeling),
