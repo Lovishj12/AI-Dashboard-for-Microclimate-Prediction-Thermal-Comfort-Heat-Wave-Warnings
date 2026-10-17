@@ -1,3 +1,4 @@
+import { API_BASE } from '../config';
 import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Polygon, Polyline, Popup, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -90,8 +91,8 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding, mode =
       try {
         setLoading(true);
         const [geoRes, microRes] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/campus/buildings'),
-          fetch(`http://127.0.0.1:8000/api/campus/microclimate/current?mode=${mode}`),
+          fetch(`${API_BASE}/campus/buildings`),
+          fetch(`${API_BASE}/campus/microclimate/current?mode=${mode}`),
         ]);
 
         if (!geoRes.ok) throw new Error(`GeoJSON fetch failed: HTTP ${geoRes.status}`);
@@ -118,8 +119,8 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding, mode =
       try {
         const microUrl =
           forecastHorizon === 'current'
-            ? 'http://127.0.0.1:8000/api/campus/microclimate/current'
-            : `http://127.0.0.1:8000/api/campus/forecast/${forecastHorizon}`;
+            ? `${API_BASE}/campus/microclimate/current`
+            : `${API_BASE}/campus/forecast/${forecastHorizon}`;
         const res = await fetch(microUrl);
         if (res.ok) {
           const data = await res.json();

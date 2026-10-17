@@ -1,3 +1,4 @@
+import { API_BASE } from '../config';
 import React, { useEffect, useState } from 'react';
 
 export default function BuildingInspector({ buildingId, mode = 'ai', onClose }) {
@@ -8,7 +9,7 @@ export default function BuildingInspector({ buildingId, mode = 'ai', onClose }) 
   useEffect(() => {
     if (!buildingId) return;
     setLoading(true);
-    fetch(`http://127.0.0.1:8000/api/campus/building/${buildingId}?mode=${mode}`)
+    fetch(`${API_BASE}/campus/building/${buildingId}?mode=${mode}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Building not found: ${res.status}`);
         return res.json();

@@ -1,3 +1,4 @@
+import { API_BASE } from '../config';
 import React, { useState, useEffect } from 'react';
 
 /**
@@ -25,7 +26,7 @@ export default function CampusACInventoryPanel({ onSelectBuilding, selectedBuild
     let isMounted = true;
     setLoading(true);
 
-    fetch(`http://127.0.0.1:8000/api/campus/ac-inventory?scenario=${scenario}`)
+    fetch(`${API_BASE}/campus/ac-inventory?scenario=${scenario}`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch AC inventory');
         return res.json();
