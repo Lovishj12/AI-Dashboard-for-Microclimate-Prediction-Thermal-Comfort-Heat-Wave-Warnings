@@ -231,13 +231,13 @@ export default function App() {
                 <h2>{statusObj.overall_level}</h2>
               </div>
               <p>
-                {statusObj.explainability.primary_triggers.join(' | ')}
+                {statusObj.explainability?.primary_triggers?.join(' | ') || 'Real-time thermodynamic evaluation normal.'}
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Dominant Risk Factor</div>
               <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc' }}>
-                {statusObj.explainability.dominant_risk_factor}
+                {statusObj.explainability?.dominant_risk_factor || 'Ambient Thermal Comfort'}
               </div>
             </div>
           </div>
@@ -342,7 +342,7 @@ export default function App() {
 
             <div className="forecast-cards-container">
               {['1', '3', '6', '24'].map((h) => {
-                const item = forecastData.forecasts[`t_plus_${h}h`];
+                const item = forecastData?.forecasts?.[`t_plus_${h}h`];
                 if (!item) return null;
                 return (
                   <div key={h} className="forecast-card">
@@ -367,7 +367,7 @@ export default function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.4rem' }}>
                       <div>
                         <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                          'Forecast Air Temp'
+                          Forecast Air Temp
                         </div>
                         <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace' }}>
                           {item.predicted_temperature_c}°C
@@ -375,7 +375,7 @@ export default function App() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                          'Forecast RH'
+                          Forecast RH
                         </div>
                         <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace' }}>
                           {item.predicted_relative_humidity_pct}%
