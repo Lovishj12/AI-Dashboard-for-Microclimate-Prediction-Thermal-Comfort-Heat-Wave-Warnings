@@ -98,6 +98,26 @@ class CustomCalculationRequest(BaseModel):
 # -------------------------------------------------------------
 
 @app.get("/api/health")
+@app.get("/api/debug")
+def debug_diagnostic():
+    import traceback
+    result = {"status": "debug_ok"}
+    try:
+        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+        result["real_obs_keys"] = list(real_obs.keys())
+        result["real_obs_sample"] = {k: str(real_obs[k]) for k in ["air_temperature_c", "relative_humidity_pct", "wind_speed_ms"]}
+    except Exception as e:
+        result["real_obs_error"] = str(e)
+        result["real_obs_traceback"] = traceback.format_exc()
+
+    try:
+        df = get_station_dataframe("kharagpur")
+        result["station_df_shape"] = list(df.shape)
+    except Exception as e:
+        result["station_df_error"] = str(e)
+
+    return result
+
 def health_check():
     """Service health and operational status."""
     return {
