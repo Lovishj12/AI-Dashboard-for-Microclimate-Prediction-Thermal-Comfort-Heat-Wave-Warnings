@@ -183,7 +183,7 @@ def get_campus_all_footprints():
 @app.get("/api/campus/building/{building_id}")
 def get_campus_building_detail(
     building_id: str,
-    mode: str = Query("ai", description="Data mode: 'ai' or 'real'")
+    mode: str = Query("real", description="Data mode: 'real' (Sourced real-data telemetry baseline)")
 ):
     """
     Returns verified spatial and physical metadata for a specific campus building or precinct,
@@ -333,7 +333,7 @@ def get_campus_building_detail(
 
 @app.get("/api/campus/microclimate/current")
 def get_campus_microclimate_current(
-    mode: str = Query("ai", description="Data mode: 'ai' (AI Prediction / Curated Benchmark) or 'real' (Live Open-Meteo Observations)")
+    mode: str = Query("real", description="Data mode: 'real' (Live synoptic observations downscaled to building footprints)")
 ):
     """
     Downscales real-time or benchmark Kharagpur regional meteorological observations
@@ -494,13 +494,15 @@ def get_single_building_ac_profile(
 @app.get("/api/current/{station_id}")
 def get_current_conditions(
     station_id: str,
-    mode: str = Query("ai", description="Data mode: 'ai' (AI Prediction / Benchmark) or 'real' (Trusted Live Observations)")
+    mode: str = Query("real", description="Data mode: 'real' (Trusted Live Synoptic Observations)")
 ):
     """
     Returns latest telemetry, complete thermodynamic state,
     and synthesized warning evaluation for a station.
-    Supports seamless global toggle between AI Prediction Mode and Real Data Mode.
     """
+    if station_id not in CONFIG.get("locations", {}):
+        raise HTTPException(status_code=404, detail=f"Station '{station_id}' is not registered in the system registry.")
+
     if mode.lower() == "real":
         # Fetch actual real-time weather observation from configured trusted external provider
         real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
@@ -594,7 +596,7 @@ def get_current_conditions(
 @app.get("/api/forecast/{station_id}")
 def get_multi_horizon_forecast(
     station_id: str,
-    mode: str = Query("ai", description="Data mode: 'ai' (AI ML Prediction) or 'real' (Trusted NWP Forecast)")
+    mode: str = Query("real", description="Data mode: 'real' (Trusted NWP Atmospheric Model Forecast)")
 ):
     """
     Computes predictions for t+1h, t+3h, t+6h, and t+24h.
@@ -643,7 +645,7 @@ def get_historical_timeseries(
 @app.get("/api/psychrometrics/{station_id}")
 def get_psychrometric_chart_data(
     station_id: str,
-    mode: str = Query("ai", description="Data mode: 'ai' or 'real'")
+    mode: str = Query("real", description="Data mode: 'real' (Sourced real-data telemetry baseline)")
 ):
     """
     Delivers exact coordinate curves for web-based interactive rendering:

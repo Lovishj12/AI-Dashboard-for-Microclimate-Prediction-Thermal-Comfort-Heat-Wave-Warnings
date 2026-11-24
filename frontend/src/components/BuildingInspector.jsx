@@ -1,7 +1,7 @@
 import { API_BASE } from '../config';
 import React, { useEffect, useState } from 'react';
 
-export default function BuildingInspector({ buildingId, mode = 'ai', onClose }) {
+export default function BuildingInspector({ buildingId, mode = 'real', onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
