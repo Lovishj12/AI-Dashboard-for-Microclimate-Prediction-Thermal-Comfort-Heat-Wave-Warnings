@@ -12,8 +12,14 @@ import { API_BASE } from './config';
 export default function App() {
   const [selectedStation, setSelectedStation] = useState('kharagpur');
   const [selectedBuildingId, setSelectedBuildingId] = useState('nalanda_complex');
-  
-  
+
+  const [currentData, setCurrentData] = useState(null);
+  const [forecastData, setForecastData] = useState(null);
+  const [historyData, setHistoryData] = useState(null);
+  const [psychroData, setPsychroData] = useState(null);
+  const [campusMicroclimate, setCampusMicroclimate] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   // Psychrometric Chart Reactive Slider State
   const [psychroTemp, setPsychroTemp] = useState(38.0);
   const [psychroRH, setPsychroRH] = useState(45.0);
