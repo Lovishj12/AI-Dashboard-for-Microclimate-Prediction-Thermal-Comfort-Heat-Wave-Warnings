@@ -12,6 +12,11 @@ import { API_BASE } from './config';
 export default function App() {
   const [selectedStation, setSelectedStation] = useState('kharagpur');
   const [selectedBuildingId, setSelectedBuildingId] = useState('nalanda_complex');
+  
+  // Persistent Global Data Mode Switch: 'ai' (AI Prediction Mode) vs 'real' (Real Data Mode)
+  const [dataMode, setDataMode] = useState(() => {
+    return localStorage.getItem('btp_data_mode') || 'ai';
+  });
 
   const [currentData, setCurrentData] = useState(null);
   const [forecastData, setForecastData] = useState(null);
@@ -19,6 +24,12 @@ export default function App() {
   const [psychroData, setPsychroData] = useState(null);
   const [campusMicroclimate, setCampusMicroclimate] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Synchronize localStorage when dataMode changes
+  const handleModeSwitch = (newMode) => {
+    setDataMode(newMode);
+    localStorage.setItem('btp_data_mode', newMode);
+  };
 
   // Psychrometric Chart Reactive Slider State
   const [psychroTemp, setPsychroTemp] = useState(38.0);
@@ -37,21 +48,21 @@ export default function App() {
 
   // Fetch campus microclimate for ranking table
   useEffect(() => {
-    fetch(`${API_BASE}/campus/microclimate/current?mode=real`)
+    fetch(`${API_BASE}/campus/microclimate/current?mode=${dataMode}`)
       .then((res) => res.json())
       .then((data) => setCampusMicroclimate(data))
       .catch((err) => console.error('Error fetching campus microclimate for ranking:', err));
-  }, []);
+  }, [dataMode]);
 
   // Fetch station telemetry and visualizer data for IIT Kharagpur
   useEffect(() => {
     setLoading(true);
 
     Promise.all([
-      fetch(`${API_BASE}/current/kharagpur?mode=real`).then((r) => r.json()),
-      fetch(`${API_BASE}/forecast/kharagpur?mode=real`).then((r) => r.json()),
+      fetch(`${API_BASE}/current/kharagpur?mode=${dataMode}`).then((r) => r.json()),
+      fetch(`${API_BASE}/forecast/kharagpur?mode=${dataMode}`).then((r) => r.json()),
       fetch(`${API_BASE}/history/kharagpur?days=3`).then((r) => r.json()),
-      fetch(`${API_BASE}/psychrometrics/kharagpur?mode=real`).then((r) => r.json()),
+      fetch(`${API_BASE}/psychrometrics/kharagpur?mode=${dataMode}`).then((r) => r.json()),
     ])
       .then(([current, forecast, history, psychro]) => {
         setCurrentData(current);
@@ -70,7 +81,7 @@ export default function App() {
         console.error('Error loading dashboard data for IIT Kharagpur:', err);
         setLoading(false);
       });
-  }, []);
+  }, [dataMode]);
 
   // Synchronize Psychrometric state back to live Kharagpur telemetry
   const handleResetToLive = useCallback(() => {
@@ -124,91 +135,143 @@ export default function App() {
               Bachelor Thesis Project (BTP) — Supervisor: Prof. Chirodeep Bakli | Campus Domain: 22.3149°N, 87.3105°E
             </p>
           </div>
-          <span className="badge-tag" style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}>SPATIAL DOWNSCALING</span>
+          <span className="badge-tag">AI-POWERED</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
-          {/* Real Telemetry & Sourced Downscaling Status */}
-          <div style={{
-            background: "rgba(16, 185, 129, 0.08)",
-            border: "1px solid rgba(16, 185, 129, 0.25)",
-            borderRadius: "8px",
-            padding: "5px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px"
-          }}>
-            <span style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              background: "#10b981",
-              boxShadow: "0 0 8px #10b981",
-              display: "inline-block"
-            }}></span>
-            <div>
-              <div style={{ fontSize: "0.68rem", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Telemetry Mode</div>
-              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#10b981" }}>Live Synoptic Observations</div>
-            </div>
+          {/* Global Dashboard Data-Source Switch */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: '#070b14',
+              padding: '4px',
+              borderRadius: '10px',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+            }}
+          >
+            <button
+              onClick={() => handleModeSwitch('ai')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '7px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                border: 'none',
+                background: dataMode === 'ai' ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : 'transparent',
+                color: dataMode === 'ai' ? '#ffffff' : '#94a3b8',
+                boxShadow: dataMode === 'ai' ? '0 2px 8px rgba(14, 165, 233, 0.4)' : 'none',
+              }}
+            >
+              <span>🤖</span>
+              <span>AI Prediction Mode</span>
+            </button>
+            <button
+              onClick={() => handleModeSwitch('real')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '7px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                border: 'none',
+                background: dataMode === 'real' ? 'linear-gradient(135deg, #10b981, #059669)' : 'transparent',
+                color: dataMode === 'real' ? '#ffffff' : '#94a3b8',
+                boxShadow: dataMode === 'real' ? '0 2px 8px rgba(16, 185, 129, 0.4)' : 'none',
+              }}
+            >
+              <span
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: dataMode === 'real' ? '#ffffff' : '#10b981',
+                  boxShadow: dataMode === 'real' ? '0 0 8px #ffffff' : 'none',
+                  display: 'inline-block',
+                }}
+              ></span>
+              <span>Real Data Mode</span>
+            </button>
           </div>
 
           <div style={{
-            background: "rgba(56, 189, 248, 0.08)",
-            border: "1px solid rgba(56, 189, 248, 0.25)",
-            borderRadius: "8px",
-            padding: "5px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px"
+            background: 'rgba(56, 189, 248, 0.08)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
+            borderRadius: '8px',
+            padding: '5px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}>
-            <span style={{ fontSize: "1rem" }}>📍</span>
+            <span style={{ fontSize: '1rem' }}>📍</span>
             <div>
-              <div style={{ fontSize: "0.68rem", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Domain</div>
-              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#38bdf8" }}>IIT Kharagpur (22.3149°N, 87.3105°E)</div>
+              <div style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location Domain</div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#38bdf8' }}>IIT Kharagpur (22.3149°N, 87.3105°E)</div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Provenance & Downscaling Verification Banner */}
+      {/* Provenance & Data Mode Status Banner */}
       <div
         style={{
-          background: "rgba(16, 185, 129, 0.08)",
-          borderBottom: "1px solid rgba(16, 185, 129, 0.25)",
-          padding: "0.45rem 2rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "1rem",
-          fontSize: "0.78rem",
+          background: dataMode === 'real' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(14, 165, 233, 0.08)',
+          borderBottom: `1px solid ${dataMode === 'real' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(14, 165, 233, 0.25)'}`,
+          padding: '0.45rem 2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          fontSize: '0.78rem',
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
           <span
             style={{
-              padding: "2px 8px",
-              borderRadius: "4px",
-              fontSize: "0.68rem",
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontSize: '0.68rem',
               fontWeight: 800,
-              textTransform: "uppercase",
-              background: "#10b981",
-              color: "#ffffff",
+              textTransform: 'uppercase',
+              background: dataMode === 'real' ? '#10b981' : '#0ea5e9',
+              color: '#ffffff',
             }}
           >
-            REAL OBSERVATION BASELINE
+            {dataMode === 'real' ? 'LIVE OBSERVED MODE' : 'AI MODEL PREDICTION MODE'}
           </span>
-          <span style={{ color: "#cbd5e1" }}>
-            <strong>Regional Source: </strong>{currentData?.source_name || "Open-Meteo High-Resolution (1.1 km) & IMD Synoptic Net"} • 
-            <span style={{ color: "#94a3b8", marginLeft: "6px" }}>
-              Observed: {currentData?.observation_timestamp_ist || currentData?.timestamp_utc || "Live Synoptic Cycle"} (Asia/Kolkata)
-            </span>
+          <span style={{ color: '#cbd5e1' }}>
+            {dataMode === 'real' ? (
+              <>
+                <strong>Source: </strong>{currentData?.source_name || 'Open-Meteo High-Resolution (1.1 km) & IMD Synoptic Net'} • 
+                <span style={{ color: '#94a3b8', marginLeft: '6px' }}>
+                  Observed: {currentData?.observation_timestamp_ist || currentData?.timestamp_utc || 'Live Synoptic Cycle'} (Asia/Kolkata)
+                </span>
+              </>
+            ) : (
+              <>
+                <strong>Source: </strong>{currentData?.source_name || 'NASA POWER / IMD Curated Benchmark & Champion ML Regressors'} • 
+                <span style={{ color: '#94a3b8', marginLeft: '6px' }}>
+                  Timestamp: {currentData?.timestamp_utc} (Asia/Kolkata)
+                </span>
+              </>
+            )}
           </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem", color: "#94a3b8", fontSize: "0.74rem" }}>
-          <span>Regional Synoptic Res: <strong style={{ color: "#f8fafc" }}>{currentData?.spatial_resolution || "1.1 km x 1.1 km"}</strong></span>
-          <span>Building Downscaling: <strong style={{ color: "#10b981" }}>Sourced Parameters (Albedo, SVF, Vegetation)</strong></span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#94a3b8', fontSize: '0.74rem' }}>
+          <span>Spatial Res: <strong style={{ color: '#f8fafc' }}>{currentData?.spatial_resolution || '1.1 km x 1.1 km'}</strong></span>
+          <span>Quality: <strong style={{ color: '#10b981' }}>Validated & Physically Consistent</strong></span>
         </div>
       </div>
 
@@ -237,13 +300,13 @@ export default function App() {
                 <h2>{statusObj.overall_level}</h2>
               </div>
               <p>
-                {statusObj.explainability?.primary_triggers?.join(' | ') || 'Real-time thermodynamic evaluation normal.'}
+                {statusObj.explainability.primary_triggers.join(' | ')}
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Dominant Risk Factor</div>
               <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc' }}>
-                {statusObj.explainability?.dominant_risk_factor || 'Ambient Thermal Comfort'}
+                {statusObj.explainability.dominant_risk_factor}
               </div>
             </div>
           </div>
@@ -255,7 +318,9 @@ export default function App() {
             <div className="metric-card glass-panel">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="metric-label">Dry-Bulb Temp (T_db)</span>
-                <span style={{ fontSize: "0.65rem", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "rgba(16, 185, 129, 0.2)", color: "#10b981" }}>OBSERVED</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: dataMode === 'real' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 165, 233, 0.2)', color: dataMode === 'real' ? '#10b981' : '#38bdf8' }}>
+                  {dataMode === 'real' ? 'OBSERVED' : 'AI MODEL'}
+                </span>
               </div>
               <span className="metric-value">{thermo.temperature_c}°C</span>
               <span className="metric-sub">Ambient air at 2m height</span>
@@ -264,7 +329,9 @@ export default function App() {
             <div className="metric-card glass-panel">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="metric-label">Relative Humidity</span>
-                <span style={{ fontSize: "0.65rem", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "rgba(16, 185, 129, 0.2)", color: "#10b981" }}>OBSERVED</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: dataMode === 'real' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 165, 233, 0.2)', color: dataMode === 'real' ? '#10b981' : '#38bdf8' }}>
+                  {dataMode === 'real' ? 'OBSERVED' : 'AI MODEL'}
+                </span>
               </div>
               <span className="metric-value">{thermo.relative_humidity_pct}%</span>
               <span className="metric-sub">Moisture fraction</span>
@@ -326,10 +393,14 @@ export default function App() {
             <div className="section-header">
               <div>
                 <h3 className="section-title">
-                  '🌐 Real-Time High-Resolution NWP Atmospheric Forecast'
+                  {dataMode === 'real'
+                    ? '🌐 Real-Time High-Resolution NWP Atmospheric Forecast'
+                    : '🤖 AI Champion Multi-Horizon ML Forecast'}
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                  'Numerical Weather Prediction (NWP) forecast retrieved from Open-Meteo / ECMWF IFS high-resolution atmospheric model'
+                  {dataMode === 'real'
+                    ? 'Numerical Weather Prediction (NWP) forecast retrieved from Open-Meteo / ECMWF IFS high-resolution atmospheric model'
+                    : 'Model inference using IIT Kharagpur-trained champion regressors (HistGradientBoosting / Ridge)'}
                 </p>
               </div>
               <span
@@ -338,17 +409,19 @@ export default function App() {
                   fontWeight: 700,
                   padding: '3px 8px',
                   borderRadius: '4px',
-                  backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)',
+                  backgroundColor: dataMode === 'real' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 165, 233, 0.2)',
+                  color: dataMode === 'real' ? '#10b981' : '#38bdf8',
+                  border: `1px solid ${dataMode === 'real' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(14, 165, 233, 0.4)'}`,
                   textTransform: 'uppercase',
                 }}
               >
-                'Forecast (NWP Model)'
+                {dataMode === 'real' ? 'Forecast (NWP Model)' : 'AI Model Prediction'}
               </span>
             </div>
 
             <div className="forecast-cards-container">
               {['1', '3', '6', '24'].map((h) => {
-                const item = forecastData?.forecasts?.[`t_plus_${h}h`];
+                const item = forecastData.forecasts[`t_plus_${h}h`];
                 if (!item) return null;
                 return (
                   <div key={h} className="forecast-card">
@@ -373,7 +446,7 @@ export default function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.4rem' }}>
                       <div>
                         <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                          Forecast Air Temp
+                          {dataMode === 'real' ? 'Forecast Air Temp' : 'Predicted Temp'}
                         </div>
                         <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace' }}>
                           {item.predicted_temperature_c}°C
@@ -381,7 +454,7 @@ export default function App() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                          Forecast RH
+                          {dataMode === 'real' ? 'Forecast RH' : 'Predicted RH'}
                         </div>
                         <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace' }}>
                           {item.predicted_relative_humidity_pct}%
@@ -404,12 +477,12 @@ export default function App() {
           <CampusMap
             selectedBuildingId={selectedBuildingId}
             onSelectBuilding={(id) => setSelectedBuildingId(id)}
-            mode='real'
+            mode={dataMode}
           />
 
           <BuildingInspector
             buildingId={selectedBuildingId}
-            mode='real'
+            mode={dataMode}
             onClose={() => setSelectedBuildingId(null)}
           />
 

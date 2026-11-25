@@ -70,7 +70,7 @@ function getContinuousThermalColor(val, minVal, maxVal) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-export default function CampusMap({ selectedBuildingId, onSelectBuilding, mode = 'real' }) {
+export default function CampusMap({ selectedBuildingId, onSelectBuilding, mode = 'ai' }) {
   const [geoData, setGeoData] = useState(null);
   const [microclimateData, setMicroclimateData] = useState(null);
 
