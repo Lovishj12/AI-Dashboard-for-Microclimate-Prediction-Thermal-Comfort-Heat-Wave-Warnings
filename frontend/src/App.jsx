@@ -5,6 +5,7 @@ import CampusMap from './components/CampusMap';
 import BuildingInspector from './components/BuildingInspector';
 import CampusRiskRanking from './components/CampusRiskRanking';
 import CampusACInventoryPanel from './components/CampusACInventoryPanel';
+import ModeComparisonPanel from './components/ModeComparisonPanel';
 import { computeAirState } from './utils/psychrometrics';
 
 import { API_BASE } from './config';
@@ -470,6 +471,9 @@ export default function App() {
             onSelectBuilding={(id) => setSelectedBuildingId(id)}
           />
         </section>
+
+        {/* Side-by-Side Visual Comparison: AI Coefficients vs. Literature Constants */}
+        <ModeComparisonPanel activeMode={dataMode} />
 
         {/* 2-Column Scientific Visualizers Grid */}
         <div className="charts-grid">
