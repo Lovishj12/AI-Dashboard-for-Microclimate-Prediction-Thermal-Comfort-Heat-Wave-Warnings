@@ -306,6 +306,64 @@ export default function BuildingInspector({ buildingId, mode = 'ai', onClose }) 
               </div>
             </div>
 
+            {/* Column: Downscaling Coefficients & Mode Comparison (AI vs Literature) */}
+            <div style={{ background: mode === 'ai' ? 'rgba(14, 165, 233, 0.05)' : 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '10px', border: `1px solid ${mode === 'ai' ? 'rgba(14, 165, 233, 0.3)' : 'rgba(16, 185, 129, 0.3)'}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: mode === 'ai' ? '#38bdf8' : '#10b981', textTransform: 'uppercase' }}>
+                  {mode === 'ai' ? '🤖 AI-Estimated Coefficients' : '📚 Literature Empirical Constants'}
+                </div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: mode === 'ai' ? '#0ea5e9' : '#10b981', color: '#fff' }}>
+                  {mode === 'ai' ? 'AI MODE' : 'LITERATURE'}
+                </span>
+              </div>
+
+              {/* Active Coefficients Breakdown */}
+              {data.modelled_microclimate.coefficients_applied && (
+                <div style={{ fontSize: '0.78rem', marginBottom: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <span style={{ color: '#94a3b8' }}>β_albedo (Solar penalty):</span>
+                    <strong style={{ color: '#38bdf8' }}>{data.modelled_microclimate.coefficients_applied.beta_albedo}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <span style={{ color: '#94a3b8' }}>β_vegetation (Canopy cooling):</span>
+                    <strong style={{ color: '#10b981' }}>{data.modelled_microclimate.coefficients_applied.beta_vegetation}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <span style={{ color: '#94a3b8' }}>β_impervious (Mass inertia):</span>
+                    <strong style={{ color: '#f59e0b' }}>+{data.modelled_microclimate.coefficients_applied.beta_impervious}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <span style={{ color: '#94a3b8' }}>β_svf (Canyon entrapment):</span>
+                    <strong style={{ color: '#c084fc' }}>+{data.modelled_microclimate.coefficients_applied.beta_svf}</strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Side-by-Side Comparison against Literature Benchmark */}
+              {data.modelled_microclimate.comparison_benchmark && (
+                <div style={{ background: 'rgba(0,0,0,0.25)', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.74rem' }}>
+                  <div style={{ fontWeight: 700, color: '#f8fafc', marginBottom: '0.3rem' }}>
+                    Comparative Benchmark Analysis:
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Literature Baseline ΔT:</span>
+                    <span style={{ fontWeight: 700, color: '#cbd5e1' }}>
+                      {data.modelled_microclimate.comparison_benchmark.literature_delta_c >= 0 ? '+' : ''}{data.modelled_microclimate.comparison_benchmark.literature_delta_c}°C
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Active Mode ΔT:</span>
+                    <span style={{ fontWeight: 700, color: mode === 'ai' ? '#38bdf8' : '#10b981' }}>
+                      {data.modelled_microclimate.temperature_delta_c >= 0 ? '+' : ''}{data.modelled_microclimate.temperature_delta_c}°C
+                    </span>
+                  </div>
+                  <div style={{ color: '#94a3b8', fontSize: '0.7rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.3rem' }}>
+                    💡 {data.modelled_microclimate.comparison_benchmark.variance_explanation}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Column 4: HVAC & Anthropogenic Waste-Heat Rejection */}
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>

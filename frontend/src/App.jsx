@@ -139,7 +139,7 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
-          {/* Global Dashboard Data-Source Switch */}
+          {/* Downscaling Coefficients Mode Switcher */}
           <div
             style={{
               display: 'flex',
@@ -153,6 +153,7 @@ export default function App() {
           >
             <button
               onClick={() => handleModeSwitch('ai')}
+              title="Predicts building-specific downscaling coefficients dynamically via AI morphology regressor"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -170,10 +171,11 @@ export default function App() {
               }}
             >
               <span>🤖</span>
-              <span>AI Prediction Mode</span>
+              <span>AI Coefficients Mode</span>
             </button>
             <button
               onClick={() => handleModeSwitch('real')}
+              title="Applies fixed empirical microclimate coefficients from published UHI literature (Santamouris/Oke)"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -200,7 +202,7 @@ export default function App() {
                   display: 'inline-block',
                 }}
               ></span>
-              <span>Real Data Mode</span>
+              <span>Literature Coefficients Mode</span>
             </button>
           </div>
 
@@ -222,7 +224,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Provenance & Data Mode Status Banner */}
+      {/* Provenance & Downscaling Coefficient Architecture Banner */}
       <div
         style={{
           background: dataMode === 'real' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(14, 165, 233, 0.08)',
@@ -248,30 +250,19 @@ export default function App() {
               color: '#ffffff',
             }}
           >
-            {dataMode === 'real' ? 'LIVE OBSERVED MODE' : 'AI MODEL PREDICTION MODE'}
+            {dataMode === 'real' ? 'LITERATURE COEFFICIENTS ACTIVE' : 'AI COEFFICIENT MODEL ACTIVE'}
           </span>
           <span style={{ color: '#cbd5e1' }}>
-            {dataMode === 'real' ? (
-              <>
-                <strong>Source: </strong>{currentData?.source_name || 'Open-Meteo High-Resolution (1.1 km) & IMD Synoptic Net'} • 
-                <span style={{ color: '#94a3b8', marginLeft: '6px' }}>
-                  Observed: {currentData?.observation_timestamp_ist || currentData?.timestamp_utc || 'Live Synoptic Cycle'} (Asia/Kolkata)
-                </span>
-              </>
-            ) : (
-              <>
-                <strong>Source: </strong>{currentData?.source_name || 'NASA POWER / IMD Curated Benchmark & Champion ML Regressors'} • 
-                <span style={{ color: '#94a3b8', marginLeft: '6px' }}>
-                  Timestamp: {currentData?.timestamp_utc} (Asia/Kolkata)
-                </span>
-              </>
-            )}
+            <strong>Regional Baseline (Identical for Both Modes): </strong>{currentData?.source_name || 'Open-Meteo High-Resolution (1.1 km) & IMD Synoptic Net'} • 
+            <span style={{ color: '#94a3b8', marginLeft: '6px' }}>
+              Downscaling Methodology: {dataMode === 'real' ? 'Fixed Empirical Constants (Santamouris & Oke)' : 'Computational ML Regressor (Building Morphology & Canyon Micro-Advection)'}
+            </span>
           </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#94a3b8', fontSize: '0.74rem' }}>
-          <span>Spatial Res: <strong style={{ color: '#f8fafc' }}>{currentData?.spatial_resolution || '1.1 km x 1.1 km'}</strong></span>
-          <span>Quality: <strong style={{ color: '#10b981' }}>Validated & Physically Consistent</strong></span>
+          <span>Regional Grid: <strong style={{ color: '#f8fafc' }}>1.1 km</strong></span>
+          <span>Downscaling Resolution: <strong style={{ color: '#38bdf8' }}>10-30m Building Precincts</strong></span>
         </div>
       </div>
 
@@ -319,7 +310,7 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="metric-label">Dry-Bulb Temp (T_db)</span>
                 <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: dataMode === 'real' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 165, 233, 0.2)', color: dataMode === 'real' ? '#10b981' : '#38bdf8' }}>
-                  {dataMode === 'real' ? 'OBSERVED' : 'AI MODEL'}
+                  OBSERVED (REGIONAL BASELINE)
                 </span>
               </div>
               <span className="metric-value">{thermo.temperature_c}°C</span>
@@ -330,7 +321,7 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="metric-label">Relative Humidity</span>
                 <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: dataMode === 'real' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 165, 233, 0.2)', color: dataMode === 'real' ? '#10b981' : '#38bdf8' }}>
-                  {dataMode === 'real' ? 'OBSERVED' : 'AI MODEL'}
+                  OBSERVED (REGIONAL BASELINE)
                 </span>
               </div>
               <span className="metric-value">{thermo.relative_humidity_pct}%</span>

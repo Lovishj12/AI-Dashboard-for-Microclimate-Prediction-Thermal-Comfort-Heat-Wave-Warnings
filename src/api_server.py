@@ -207,42 +207,39 @@ def get_campus_building_detail(
     if not target_feature:
         raise HTTPException(status_code=404, detail=f"Building '{building_id}' not found in campus registry")
 
-    # Fetch regional Kharagpur meteorological observation based on mode
-    if mode.lower() == "real":
-        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
-        regional_t = float(real_obs["air_temperature_c"])
-        regional_rh = float(real_obs["relative_humidity_pct"])
-        regional_ws = float(real_obs["wind_speed_ms"])
-        regional_solar = float(real_obs.get("solar_radiation_wm2", 500.0))
-    else:
-        df = get_station_dataframe("kharagpur")
-        latest_row = df.iloc[-1]
-        regional_t = float(latest_row["temperature_c"])
-        regional_rh = float(latest_row["relative_humidity_pct"])
-        regional_ws = float(latest_row.get("wind_speed_ms", 2.0))
-        regional_solar = float(latest_row.get("solar_radiation_wm2", 500.0))
+    # Both modes consume the exact same live real synoptic meteorological baseline
+    real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+    regional_t = float(real_obs["air_temperature_c"])
+    regional_rh = float(real_obs["relative_humidity_pct"])
+    regional_ws = float(real_obs["wind_speed_ms"])
+    regional_solar = float(real_obs.get("solar_radiation_wm2", 500.0))
 
     props = target_feature["properties"]
     albedo = float(props.get("albedo", 0.25))
     veg_frac = float(props.get("vegetation_fraction", 0.30))
     imp_frac = float(props.get("impervious_fraction", 0.70))
     svf = float(props.get("sky_view_factor", 0.75))
+    floors = int(props.get("floors", 3))
+    area_sqm = float(props.get("area_sqm", 5000.0))
 
-    # Scientifically defensible local microclimate perturbation estimates (UNSW empirical framework)
-    # Lower albedo + high imperviousness + low vegetation elevates local T_db; water/canopy reduces it
-    temp_delta = (
-        + (0.30 - albedo) * 2.5       # Dark surface solar absorption penalty
-        - (veg_frac - 0.25) * 2.2     # Evapotranspirative vegetative cooling benefit
-        + (imp_frac - 0.50) * 1.5     # Thermal mass heat storage penalty
-        + (svf - 0.70) * 0.8          # Daytime radiative exposure
+    # Evaluate dynamic microclimate delta using unified downscaling coefficients engine
+    from src.campus_microclimate import compute_building_microclimate_delta
+    coeff_mode = "ai" if mode.lower() in ["ai", "ai_coefficients", "ai_model"] else "literature"
+    delta_res = compute_building_microclimate_delta(
+        albedo=albedo,
+        vegetation_fraction=veg_frac,
+        impervious_fraction=imp_frac,
+        sky_view_factor=svf,
+        solar_radiation_wm2=regional_solar,
+        wind_speed_ms=regional_ws,
+        anthropogenic_heat_flux_wm2=0.0,
+        mode=coeff_mode,
+        floors=floors,
+        area_sqm=area_sqm
     )
-    # Clamped within physically grounded perturbation bounds [-3.0°C to +3.5°C]
-    temp_delta = max(-3.0, min(3.5, temp_delta))
+    temp_delta = delta_res["temperature_delta_c"]
     local_t = round(regional_t + temp_delta, 2)
-
-    # Relative humidity inverse response to temperature delta + vegetative transpiration
-    rh_delta = round(-1.2 * temp_delta + (veg_frac * 3.0), 1)
-    local_rh = max(10.0, min(100.0, round(regional_rh + rh_delta, 1)))
+    local_rh = max(10.0, min(100.0, round(regional_rh + delta_res["relative_humidity_delta_pct"], 1)))
 
     # Compute physical biometeorological parameters for the building
     local_twb = wet_bulb_temperature(local_t, local_rh)
@@ -294,7 +291,7 @@ def get_campus_building_detail(
             "solar_radiation_wm2": regional_solar,
         },
         "modelled_microclimate": {
-            "tier": "Modelled / Estimated",
+            "tier": "Modelled / Downscaled (AI Mode vs Literature)",
             "temperature_c": local_t,
             "surface_temperature_c": local_surface_t,
             "temperature_delta_c": round(temp_delta, 2),
@@ -304,6 +301,9 @@ def get_campus_building_detail(
             "swbgt_c": local_swbgt,
             "vulnerability_index_score": vuln_score,
             "risk_status": classify_heat_index(local_hi),
+            "coefficients_applied": delta_res["coefficients_applied"],
+            "comparison_benchmark": delta_res["comparison_benchmark"],
+            "components": delta_res["components"],
         },
         "ac_inventory": {
             "evidence_tier": ac_profile["evidence_tier"],
@@ -333,45 +333,34 @@ def get_campus_building_detail(
 
 @app.get("/api/campus/microclimate/current")
 def get_campus_microclimate_current(
-    mode: str = Query("ai", description="Data mode: 'ai' (AI Prediction / Curated Benchmark) or 'real' (Live Open-Meteo Observations)")
+    mode: str = Query("ai", description="Downscaling mode: 'ai' (AI-Predicted Dynamic Coefficients) or 'literature' (Literature-Sourced Empirical Constants)")
 ):
     """
-    Downscales real-time or benchmark Kharagpur regional meteorological observations
-    across all 24 verified campus buildings and spatial precincts concurrently.
-    Supports seamless global toggle between AI Prediction Mode and Real Data Mode.
+    Downscales real-time Kharagpur regional meteorological observations across all 24 campus buildings.
+    Both modes use the exact same real synoptic telemetry as baseline; mode controls coefficient estimation.
     """
-    if mode.lower() == "real":
-        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
-        regional_t = float(real_obs["air_temperature_c"])
-        regional_rh = float(real_obs["relative_humidity_pct"])
-        regional_ws = float(real_obs["wind_speed_ms"])
-        regional_solar = float(real_obs["solar_radiation_wm2"])
-        eval_result = CAMPUS_MICROCLIMATE_ENGINE.evaluate_all_buildings(
-            regional_temperature_c=regional_t,
-            regional_relative_humidity_pct=regional_rh,
-            regional_wind_speed_ms=regional_ws,
-            regional_solar_radiation_wm2=regional_solar
-        )
-        eval_result["data_mode"] = "real"
-        if "regional_reference" in eval_result:
-            eval_result["regional_reference"]["source"] = "Open-Meteo High-Res & IMD Synoptic Net (Live Telemetry)"
-            eval_result["regional_reference"]["observation_timestamp"] = real_obs["timestamp"]
-        return eval_result
+    # Both modes consume the exact same live real synoptic meteorological baseline
+    real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+    regional_t = float(real_obs["air_temperature_c"])
+    regional_rh = float(real_obs["relative_humidity_pct"])
+    regional_ws = float(real_obs["wind_speed_ms"])
+    regional_solar = float(real_obs["solar_radiation_wm2"])
 
-    df = get_station_dataframe("kharagpur")
-    latest_row = df.iloc[-1]
-    regional_t = float(latest_row["temperature_c"])
-    regional_rh = float(latest_row["relative_humidity_pct"])
-    regional_ws = float(latest_row.get("wind_speed_ms", 2.0))
-    regional_solar = float(latest_row.get("solar_radiation_wm2", 500.0))
+    coeff_mode = "ai" if mode.lower() in ["ai", "ai_coefficients", "ai_model"] else "literature"
 
     eval_result = CAMPUS_MICROCLIMATE_ENGINE.evaluate_all_buildings(
         regional_temperature_c=regional_t,
         regional_relative_humidity_pct=regional_rh,
         regional_wind_speed_ms=regional_ws,
-        regional_solar_radiation_wm2=regional_solar
+        regional_solar_radiation_wm2=regional_solar,
+        mode=coeff_mode
     )
-    eval_result["data_mode"] = "ai"
+    eval_result["data_mode"] = coeff_mode
+    eval_result["downscaling_mode"] = coeff_mode
+    eval_result["downscaling_mode_label"] = "AI-Predicted Dynamic Coefficients" if coeff_mode == "ai" else "Literature-Sourced Fixed Coefficients"
+    if "regional_reference" in eval_result:
+        eval_result["regional_reference"]["source"] = "Open-Meteo High-Res & IMD Synoptic Net (Live Telemetry)"
+        eval_result["regional_reference"]["observation_timestamp"] = real_obs["timestamp"]
     return eval_result
 
 @app.get("/api/campus/forecast")

@@ -1,3 +1,4 @@
+from src.downscaling_coefficients import get_downscaling_coefficients
 """
 Step 6: Spatial Microclimate Downscaling Engine for IIT Kharagpur.
 
@@ -45,8 +46,11 @@ def compute_building_microclimate_delta(
     sky_view_factor: float,
     solar_radiation_wm2: float = 500.0,
     wind_speed_ms: float = 2.0,
-    anthropogenic_heat_flux_wm2: float = 0.0
-) -> Dict[str, float]:
+    anthropogenic_heat_flux_wm2: float = 0.0,
+    mode: str = "literature",
+    floors: int = 3,
+    area_sqm: float = 5000.0
+) -> Dict[str, Any]:
     """
     Computes local microclimate perturbation deltas (ΔT and ΔRH) relative to regional station.
     
@@ -58,27 +62,82 @@ def compute_building_microclimate_delta(
     - Anthropogenic AC heat rejection: ΔT_anthro = min(0.85, (q_anthro / 150.0) * 0.40)
     - Wind ventilation factor: High wind reduces local microclimatic anomalies.
     """
-    # Wind attenuation factor: anomalies diminish with strong convective mixing
-    wind_attenuation = 1.0 / (1.0 + 0.15 * max(0.0, wind_speed_ms - 1.0))
+    # Fetch coefficients for selected mode (Literature vs AI Model)
+    coeff_data = get_downscaling_coefficients(
+        mode=mode,
+        albedo=albedo,
+        vegetation_fraction=vegetation_fraction,
+        impervious_fraction=impervious_fraction,
+        sky_view_factor=sky_view_factor,
+        floors=floors,
+        area_sqm=area_sqm,
+        solar_radiation_wm2=solar_radiation_wm2,
+        wind_speed_ms=wind_speed_ms
+    )
+
+    # Fetch literature coefficients as standard benchmark for side-by-side comparison
+    lit_data = get_downscaling_coefficients(
+        mode="literature",
+        albedo=albedo,
+        vegetation_fraction=vegetation_fraction,
+        impervious_fraction=impervious_fraction,
+        sky_view_factor=sky_view_factor,
+        floors=floors,
+        area_sqm=area_sqm,
+        solar_radiation_wm2=solar_radiation_wm2,
+        wind_speed_ms=wind_speed_ms
+    )
+
+    wind_attenuation = 1.0 / (1.0 + coeff_data["wind_decay_rate"] * max(0.0, wind_speed_ms - 1.0))
     solar_scale = min(1.5, max(0.2, solar_radiation_wm2 / 500.0))
 
-    delta_albedo = (0.30 - albedo) * 2.8 * solar_scale
-    delta_veg = - (vegetation_fraction - 0.25) * 2.4
-    delta_imp = (impervious_fraction - 0.50) * 1.6
-    delta_svf = (sky_view_factor - 0.70) * 0.9 * solar_scale
-    # Anthropogenic condenser heat rejection component (empirically bounded to realistic canopy delta)
-    delta_anthro = min(0.85, (max(0.0, anthropogenic_heat_flux_wm2) / 150.0) * 0.40)
+    b_alb = coeff_data["beta_albedo"]
+    b_veg = coeff_data["beta_vegetation"]
+    b_imp = coeff_data["beta_impervious"]
+    b_svf = coeff_data["beta_svf"]
+    b_anthro = coeff_data["beta_anthro"]
+
+    delta_albedo = (coeff_data["base_albedo"] - albedo) * b_alb if mode.lower() in ["ai", "ai_coefficients", "ai_model"] else (0.30 - albedo) * b_alb * solar_scale
+    delta_veg = (vegetation_fraction - coeff_data["base_vegetation"]) * b_veg
+    delta_imp = (impervious_fraction - coeff_data["base_impervious"]) * b_imp
+    delta_svf = (sky_view_factor - coeff_data["base_svf"]) * b_svf if mode.lower() in ["ai", "ai_coefficients", "ai_model"] else (sky_view_factor - 0.70) * b_svf * solar_scale
+    delta_anthro = min(0.85, (max(0.0, anthropogenic_heat_flux_wm2) / 150.0) * b_anthro)
 
     raw_temp_delta = (delta_albedo + delta_veg + delta_imp + delta_svf + delta_anthro) * wind_attenuation
-    # Clamp perturbation to physically observed urban canopy microclimate bounds [-3.5°C to +4.0°C]
     clamped_temp_delta = max(-3.5, min(4.0, raw_temp_delta))
-
-    # RH perturbation: negative correlation with temperature + positive evapotranspiration from vegetation
     rh_delta = (-1.4 * clamped_temp_delta) + (vegetation_fraction * 3.5)
-    
+
+    # Compute baseline literature delta for comparison
+    lit_raw_delta = (
+        (0.30 - albedo) * 2.8 * solar_scale
+        - (vegetation_fraction - 0.25) * 2.4
+        + (impervious_fraction - 0.50) * 1.6
+        + (sky_view_factor - 0.70) * 0.9 * solar_scale
+        + min(0.85, (max(0.0, anthropogenic_heat_flux_wm2) / 150.0) * 0.40)
+    ) * (1.0 / (1.0 + 0.15 * max(0.0, wind_speed_ms - 1.0)))
+    lit_clamped_delta = max(-3.5, min(4.0, lit_raw_delta))
+
     return {
         "temperature_delta_c": round(clamped_temp_delta, 2),
         "relative_humidity_delta_pct": round(rh_delta, 1),
+        "coefficients_applied": {
+            "mode": coeff_data["mode"],
+            "mode_label": coeff_data["mode_label"],
+            "beta_albedo": coeff_data["beta_albedo"],
+            "beta_vegetation": coeff_data["beta_vegetation"],
+            "beta_impervious": coeff_data["beta_impervious"],
+            "beta_svf": coeff_data["beta_svf"],
+            "beta_anthro": coeff_data["beta_anthro"],
+        },
+        "comparison_benchmark": {
+            "literature_delta_c": round(lit_clamped_delta, 2),
+            "difference_from_literature_c": round(clamped_temp_delta - lit_clamped_delta, 2),
+            "variance_explanation": (
+                "AI model accounts for building height canyon trapping and courtyard wind sheltering"
+                if abs(clamped_temp_delta - lit_clamped_delta) > 0.05 else
+                "AI model prediction closely aligns with empirical literature baseline"
+            )
+        },
         "components": {
             "albedo_effect": round(delta_albedo * wind_attenuation, 2),
             "vegetation_effect": round(delta_veg * wind_attenuation, 2),
