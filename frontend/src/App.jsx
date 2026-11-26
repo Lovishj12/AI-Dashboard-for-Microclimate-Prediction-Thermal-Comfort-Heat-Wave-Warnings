@@ -59,23 +59,26 @@ export default function App() {
   useEffect(() => {
     setLoading(true);
 
-    Promise.all([
-      fetch(`${API_BASE}/current/kharagpur?mode=${dataMode}`).then((r) => r.json()),
-      fetch(`${API_BASE}/forecast/kharagpur?mode=${dataMode}`).then((r) => r.json()),
-      fetch(`${API_BASE}/history/kharagpur?days=3`).then((r) => r.json()),
-      fetch(`${API_BASE}/psychrometrics/kharagpur?mode=${dataMode}`).then((r) => r.json()),
+    Promise.allSettled([
+      fetch(`${API_BASE}/current/kharagpur?mode=${dataMode}`).then((r) => r.ok ? r.json() : Promise.reject(r.status)),
+      fetch(`${API_BASE}/forecast/kharagpur?mode=${dataMode}`).then((r) => r.ok ? r.json() : Promise.reject(r.status)),
+      fetch(`${API_BASE}/history/kharagpur?days=3`).then((r) => r.ok ? r.json() : Promise.reject(r.status)),
+      fetch(`${API_BASE}/psychrometrics/kharagpur?mode=${dataMode}`).then((r) => r.ok ? r.json() : Promise.reject(r.status)),
     ])
-      .then(([current, forecast, history, psychro]) => {
-        setCurrentData(current);
-        setForecastData(forecast);
-        setHistoryData(history);
-        setPsychroData(psychro);
-        if (current?.status?.thermodynamic_state) {
-          const liveT = current.status.thermodynamic_state.temperature_c;
-          const liveRH = current.status.thermodynamic_state.relative_humidity_pct;
-          setPsychroTemp(liveT);
-          setPsychroRH(liveRH);
+      .then(([currentRes, forecastRes, historyRes, psychroRes]) => {
+        if (currentRes.status === 'fulfilled') {
+          const current = currentRes.value;
+          setCurrentData(current);
+          if (current?.status?.thermodynamic_state) {
+            const liveT = current.status.thermodynamic_state.temperature_c;
+            const liveRH = current.status.thermodynamic_state.relative_humidity_pct;
+            setPsychroTemp(liveT);
+            setPsychroRH(liveRH);
+          }
         }
+        if (forecastRes.status === 'fulfilled') setForecastData(forecastRes.value);
+        if (historyRes.status === 'fulfilled') setHistoryData(historyRes.value);
+        if (psychroRes.status === 'fulfilled') setPsychroData(psychroRes.value);
         setLoading(false);
       })
       .catch((err) => {
