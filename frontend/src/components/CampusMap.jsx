@@ -90,13 +90,21 @@ export default function CampusMap({ selectedBuildingId, onSelectBuilding, mode =
     async function fetchCampusData() {
       try {
         setLoading(true);
+        setError(null);
         const [geoRes, microRes] = await Promise.all([
           fetch(`${API_BASE}/campus/buildings`),
           fetch(`${API_BASE}/campus/microclimate/current?mode=${mode}`),
         ]);
 
-        if (!geoRes.ok) throw new Error(`GeoJSON fetch failed: HTTP ${geoRes.status}`);
-        if (!microRes.ok) throw new Error(`Microclimate fetch failed: HTTP ${microRes.status}`);
+        if (!geoRes.ok) throw new Error(`GeoJSON fetch failed: HTTP ${geoRes.status} (${geoRes.statusText})`);
+        if (!microRes.ok) {
+          let errDetail = `HTTP ${microRes.status}`;
+          try {
+            const errJson = await microRes.json();
+            if (errJson.detail) errDetail += ` - ${typeof errJson.detail === 'string' ? errJson.detail : JSON.stringify(errJson.detail)}`;
+          } catch (_) {}
+          throw new Error(`Microclimate fetch failed: ${errDetail}`);
+        }
 
         const geo = await geoRes.json();
         const micro = await microRes.json();

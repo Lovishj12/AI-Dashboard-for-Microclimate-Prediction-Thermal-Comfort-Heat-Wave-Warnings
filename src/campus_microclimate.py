@@ -193,7 +193,8 @@ class CampusMicroclimateEngine:
         regional_temperature_c: float,
         regional_relative_humidity_pct: float,
         regional_wind_speed_ms: float = 2.0,
-        regional_solar_radiation_wm2: float = 500.0
+        regional_solar_radiation_wm2: float = 500.0,
+        mode: str = "literature"
     ) -> Dict[str, Any]:
         """
         Computes downscaled microclimates for all 24 buildings across IIT Kharagpur campus.
@@ -215,6 +216,7 @@ class CampusMicroclimateEngine:
             ac_pen = float(props.get("ac_penetration", 0.50))
             footfall = props.get("estimated_footfall", "Medium")
             vuln_base = props.get("vulnerability_baseline", "Medium")
+            floors = int(props.get("floors", 3))
 
             # Retrieve building AC inventory profile and compute active heat rejection
             area_sqm = float(props.get("area_sqm", 5000.0))
@@ -232,7 +234,10 @@ class CampusMicroclimateEngine:
                 sky_view_factor=svf,
                 solar_radiation_wm2=regional_solar_radiation_wm2,
                 wind_speed_ms=regional_wind_speed_ms,
-                anthropogenic_heat_flux_wm2=ac_rejection["anthropogenic_flux_wm2"]
+                anthropogenic_heat_flux_wm2=ac_rejection["anthropogenic_flux_wm2"],
+                mode=mode,
+                floors=floors,
+                area_sqm=area_sqm
             )
 
             local_t = round(regional_temperature_c + deltas["temperature_delta_c"], 2)

@@ -378,90 +378,72 @@ export default function App() {
           </div>
         )}
 
-        {/* Multi-Horizon AI Forecast Section */}
-        {forecastData && (
-          <section className="forecast-section glass-panel">
-            <div className="section-header">
-              <div>
-                <h3 className="section-title">
-                  {dataMode === 'real'
-                    ? '🌐 Real-Time High-Resolution NWP Atmospheric Forecast'
-                    : '🤖 AI Champion Multi-Horizon ML Forecast'}
+        {/* Downscaling Coefficient Architecture Mode Banner */}
+        <section
+          className="glass-panel"
+          style={{
+            marginBottom: '1.5rem',
+            padding: '1.1rem 1.4rem',
+            borderRadius: '12px',
+            border: dataMode === 'ai'
+              ? '1px solid rgba(56, 189, 248, 0.4)'
+              : '1px solid rgba(16, 185, 129, 0.4)',
+            background: dataMode === 'ai'
+              ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(15, 23, 42, 0.85))'
+              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.85))',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>{dataMode === 'ai' ? '🤖' : '📚'}</span>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>
+                  Active Downscaling Mode: {dataMode === 'ai' ? 'AI-Trained Building Coefficient Regressor' : 'Empirical Literature Constants'}
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                  {dataMode === 'real'
-                    ? 'Numerical Weather Prediction (NWP) forecast retrieved from Open-Meteo / ECMWF IFS high-resolution atmospheric model'
-                    : 'Model inference using IIT Kharagpur-trained champion regressors (HistGradientBoosting / Ridge)'}
-                </p>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: dataMode === 'ai' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                    color: dataMode === 'ai' ? '#38bdf8' : '#10b981',
+                    border: dataMode === 'ai' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(16, 185, 129, 0.4)',
+                  }}
+                >
+                  {dataMode === 'ai' ? 'AI COEFFICIENT PREDICTION' : 'LITERATURE CONSTANTS'}
+                </span>
               </div>
-              <span
-                style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                  backgroundColor: dataMode === 'real' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 165, 233, 0.2)',
-                  color: dataMode === 'real' ? '#10b981' : '#38bdf8',
-                  border: `1px solid ${dataMode === 'real' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(14, 165, 233, 0.4)'}`,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {dataMode === 'real' ? 'Forecast (NWP Model)' : 'AI Model Prediction'}
-              </span>
+              <p style={{ fontSize: '0.84rem', color: '#94a3b8', margin: 0, maxWidth: '850px' }}>
+                {dataMode === 'ai'
+                  ? 'Building-specific downscaling coefficients (β_albedo, β_veg, β_imp, β_svf) are predicted dynamically by an AI multi-output regressor trained on urban morphology physics, canyon geometry (H/W), and localized thermal regimes.'
+                  : 'Standard urban microclimate empirical coefficients from published literature: Oke (1988), Santamouris et al. (2014) UHI framework, and Bowler et al. (2010) greening studies.'}
+              </p>
             </div>
-
-            <div className="forecast-cards-container">
-              {['1', '3', '6', '24'].map((h) => {
-                const item = forecastData.forecasts[`t_plus_${h}h`];
-                if (!item) return null;
-                return (
-                  <div key={h} className="forecast-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc' }}>
-                        Horizon: +{h} Hour{h === '1' ? '' : 's'}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          padding: '0.15rem 0.5rem',
-                          borderRadius: '4px',
-                          backgroundColor: item.risk_color || item.warning_color || '#3b82f6',
-                          color: '#ffffff',
-                        }}
-                      >
-                        {item.heat_index_risk || item.warning_level}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.4rem' }}>
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                          {dataMode === 'real' ? 'Forecast Air Temp' : 'Predicted Temp'}
-                        </div>
-                        <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace' }}>
-                          {item.predicted_temperature_c}°C
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                          {dataMode === 'real' ? 'Forecast RH' : 'Predicted RH'}
-                        </div>
-                        <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace' }}>
-                          {item.predicted_relative_humidity_pct}%
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '0.2rem' }}>
-                      Provider: {item.model_name || item.model_architecture}
-                    </div>
-                  </div>
-                );
-              })}
+            <div
+              style={{
+                display: 'flex',
+                gap: '1rem',
+                background: 'rgba(0, 0, 0, 0.35)',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                fontSize: '0.78rem',
+              }}
+            >
+              <div>
+                <span style={{ color: '#64748b', display: 'block' }}>Regional Baseline</span>
+                <strong style={{ color: '#10b981' }}>Live Synoptic API (Shared)</strong>
+              </div>
+              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '1rem' }}>
+                <span style={{ color: '#64748b', display: 'block' }}>Coefficient Source</span>
+                <strong style={{ color: dataMode === 'ai' ? '#38bdf8' : '#fbbf24' }}>
+                  {dataMode === 'ai' ? 'ML Regressor Model' : 'Fixed Published Tables'}
+                </strong>
+              </div>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
         {/* IIT Kharagpur Campus Spatial Microclimate Map & Inspector */}
         <section style={{ marginBottom: '1.5rem' }}>

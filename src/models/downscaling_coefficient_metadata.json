@@ -1,0 +1,55 @@
+{
+  "model_name": "Multi-Output Random Forest Building Downscaling Regressor",
+  "version": "2.0.0-trained",
+  "features": [
+    "floors",
+    "height_m",
+    "footprint_area_sqm",
+    "aspect_ratio",
+    "albedo",
+    "vegetation_fraction",
+    "impervious_fraction",
+    "sky_view_factor",
+    "solar_radiation_wm2",
+    "wind_speed_ms"
+  ],
+  "targets": [
+    "beta_albedo",
+    "beta_vegetation",
+    "beta_impervious",
+    "beta_svf",
+    "beta_anthro"
+  ],
+  "n_training_samples": 2400,
+  "n_test_samples": 600,
+  "overall_r2": 0.8933,
+  "overall_rmse": 0.0624,
+  "target_metrics": {
+    "beta_albedo": {
+      "r2_score": 0.9832,
+      "rmse": 0.0881,
+      "mae": 0.0708
+    },
+    "beta_vegetation": {
+      "r2_score": 0.9466,
+      "rmse": 0.0753,
+      "mae": 0.0594
+    },
+    "beta_impervious": {
+      "r2_score": 0.809,
+      "rmse": 0.0612,
+      "mae": 0.0489
+    },
+    "beta_svf": {
+      "r2_score": 0.891,
+      "rmse": 0.055,
+      "mae": 0.044
+    },
+    "beta_anthro": {
+      "r2_score": 0.8369,
+      "rmse": 0.0323,
+      "mae": 0.0253
+    }
+  },
+  "training_method": "Multi-Output Ensemble Regressor on Physics-Grounded Urban Energy Balance dataset"
+}
