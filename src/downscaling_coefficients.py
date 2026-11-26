@@ -15,6 +15,7 @@ import joblib
 from pathlib import Path
 from typing import Dict, Any, Tuple
 import numpy as np
+import pandas as pd
 
 # Literature-derived empirical coefficients (Santamouris 2014, Oke 1988, Bowler 2010, de Munck 2013)
 LITERATURE_COEFFICIENTS = {
