@@ -80,18 +80,18 @@ class BuildingCoefficientMLModel:
         wind_mixing = 1.0 / (1.0 + 0.18 * max(0.0, wind_speed_ms - 1.0))
 
         if self.model is not None:
-            features = np.array([[
-                float(floors),
-                float(height_m),
-                float(area_sqm),
-                float(aspect_ratio),
-                float(albedo),
-                float(vegetation_fraction),
-                float(impervious_fraction),
-                float(sky_view_factor),
-                float(solar_radiation_wm2),
-                float(wind_speed_ms)
-            ]])
+            features = pd.DataFrame([{
+                "floors": float(floors),
+                "height_m": float(height_m),
+                "footprint_area_sqm": float(area_sqm),
+                "aspect_ratio": float(aspect_ratio),
+                "albedo": float(albedo),
+                "vegetation_fraction": float(vegetation_fraction),
+                "impervious_fraction": float(impervious_fraction),
+                "sky_view_factor": float(sky_view_factor),
+                "solar_radiation_wm2": float(solar_radiation_wm2),
+                "wind_speed_ms": float(wind_speed_ms)
+            }])
             preds = self.model.predict(features)[0]
             beta_albedo, beta_veg, beta_imp, beta_svf, beta_anthro = preds
             arch_label = self.metadata.get("model_name", "Multi-Output Random Forest Building Downscaling Regressor")

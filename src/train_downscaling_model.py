@@ -149,9 +149,10 @@ def train_downscaling_coefficient_models():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
-    print("Training Multi-Output Random Forest Regressor...")
+    print("Training Multi-Output Gradient Boosting Regressor (Lightweight & High Speed)...")
+    # Using HistGradientBoosting inside MultiOutputRegressor produces compact ~1.5MB models suitable for cloud hosting
     rf = MultiOutputRegressor(
-        RandomForestRegressor(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1)
+        HistGradientBoostingRegressor(max_iter=75, max_depth=8, random_state=42)
     )
     rf.fit(X_train, y_train)
 

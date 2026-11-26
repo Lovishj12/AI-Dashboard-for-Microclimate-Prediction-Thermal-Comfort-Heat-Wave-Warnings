@@ -22,33 +22,33 @@
   ],
   "n_training_samples": 2400,
   "n_test_samples": 600,
-  "overall_r2": 0.8933,
-  "overall_rmse": 0.0624,
+  "overall_r2": 0.8928,
+  "overall_rmse": 0.0622,
   "target_metrics": {
     "beta_albedo": {
-      "r2_score": 0.9832,
-      "rmse": 0.0881,
-      "mae": 0.0708
+      "r2_score": 0.9842,
+      "rmse": 0.0852,
+      "mae": 0.0691
     },
     "beta_vegetation": {
-      "r2_score": 0.9466,
-      "rmse": 0.0753,
-      "mae": 0.0594
+      "r2_score": 0.9452,
+      "rmse": 0.0763,
+      "mae": 0.0598
     },
     "beta_impervious": {
-      "r2_score": 0.809,
-      "rmse": 0.0612,
-      "mae": 0.0489
+      "r2_score": 0.8074,
+      "rmse": 0.0614,
+      "mae": 0.0486
     },
     "beta_svf": {
-      "r2_score": 0.891,
-      "rmse": 0.055,
-      "mae": 0.044
+      "r2_score": 0.8874,
+      "rmse": 0.0559,
+      "mae": 0.0448
     },
     "beta_anthro": {
-      "r2_score": 0.8369,
-      "rmse": 0.0323,
-      "mae": 0.0253
+      "r2_score": 0.8399,
+      "rmse": 0.032,
+      "mae": 0.0252
     }
   },
   "training_method": "Multi-Output Ensemble Regressor on Physics-Grounded Urban Energy Balance dataset"
