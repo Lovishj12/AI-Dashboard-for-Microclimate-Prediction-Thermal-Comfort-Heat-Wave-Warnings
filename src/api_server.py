@@ -488,14 +488,14 @@ def get_single_building_ac_profile(
 @app.get("/api/current/{station_id}")
 def get_current_conditions(
     station_id: str,
-    mode: str = Query("ai", description="Data mode: 'ai' (AI Prediction / Benchmark) or 'real' (Trusted Live Observations)")
+    mode: str = Query("ai", description="Data mode: 'ai' or 'real'/'literature'")
 ):
     """
     Returns latest telemetry, complete thermodynamic state,
     and synthesized warning evaluation for a station.
-    Supports seamless global toggle between AI Prediction Mode and Real Data Mode.
+    Both modes use the same live real-data regional baseline for Kharagpur.
     """
-    if mode.lower() == "real":
+    if station_id.lower() == "kharagpur" or mode.lower() == "real":
         # Fetch actual real-time weather observation from configured trusted external provider
         real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
         t = real_obs["air_temperature_c"]
@@ -516,11 +516,13 @@ def get_current_conditions(
             horizon_hours=0
         )
 
+        coeff_mode = "ai" if mode.lower() in ["ai", "ai_coefficients", "ai_model"] else "real"
+
         return {
             "station_id": station_id,
             "station_name": CONFIG["locations"].get(station_id, {}).get("name", "IIT Kharagpur"),
-            "data_mode": "real",
-            "data_mode_label": "Real Data Mode (Observed Live Telemetry)",
+            "data_mode": coeff_mode,
+            "data_mode_label": "AI Coefficients Mode (Live Regional Baseline)" if coeff_mode == "ai" else "Literature Coefficients Mode (Live Regional Baseline)",
             "timestamp_utc": obs_time,
             "observation_timestamp_ist": obs_time,
             "retrieval_timestamp_ist": real_obs["retrieval_timestamp"],

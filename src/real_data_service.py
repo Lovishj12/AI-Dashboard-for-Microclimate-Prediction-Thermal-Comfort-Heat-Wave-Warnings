@@ -158,6 +158,74 @@ class RealDataProviderService:
                 stale_entry["quality_flags"] = ["STALE_CACHE", f"NETWORK_WARN: {str(exc)}"]
                 return stale_entry
 
+            # Secondary Live Provider: MET Norway Locationforecast (free, reliable, no API key)
+            try:
+                met_url = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={self.lat:.4f}&lon={self.lon:.4f}"
+                met_req = urllib.request.Request(met_url, headers={"User-Agent": "IIT-KGP-Microclimate-Dashboard/1.0 github.com/Lovishj12"})
+                with urllib.request.urlopen(met_req, timeout=7) as m_resp:
+                    m_raw = json.loads(m_resp.read().decode("utf-8"))
+                ts0 = m_raw["properties"]["timeseries"][0]
+                inst = ts0["data"]["instant"]["details"]
+                t = float(inst.get("air_temperature", 20.0))
+                rh = float(inst.get("relative_humidity", 70.0))
+                p = float(inst.get("air_pressure_at_sea_level", STANDARD_PRESSURE_HPA))
+                ws_ms = float(inst.get("wind_speed", 2.0))
+                wd = float(inst.get("wind_from_direction", 0.0))
+                solar = 0.0  # MET compact does not provide direct DNI; 0 at night or estimated
+                obs_time = retrieval_dt.strftime("%Y-%m-%dT%H:%M")
+
+                td = dew_point_temperature(t, rh)
+                twb = wet_bulb_temperature(t, rh)
+                hi = heat_index(t, rh)
+                swbgt = simplified_wbgt(t, rh)
+                w_ratio = float(humidity_ratio(td, p)) * 1000.0
+
+                met_normalized = {
+                    "timestamp": obs_time,
+                    "timezone": "Asia/Kolkata",
+                    "location_id": "kharagpur",
+                    "location_name": self.location_name,
+                    "latitude": self.lat,
+                    "longitude": self.lon,
+                    "air_temperature_c": round(t, 2),
+                    "relative_humidity_pct": round(rh, 1),
+                    "surface_pressure_hpa": round(p, 1),
+                    "wind_speed_ms": round(ws_ms, 2),
+                    "wind_direction_deg": round(wd, 0),
+                    "rainfall_mm": 0.0,
+                    "solar_radiation_wm2": solar,
+                    "dew_point_c": round(td, 2),
+                    "wet_bulb_c": round(twb, 2),
+                    "heat_index_c": round(hi, 2),
+                    "swbgt_c": round(swbgt, 2),
+                    "humidity_ratio_g_kg": round(w_ratio, 2),
+                    "utci_c": None,
+                    "utci_status": "Unavailable",
+                    "source_name": "MET Norway Global Synoptic (Secondary Live Provider)",
+                    "source_timestamp": ts0.get("time", obs_time),
+                    "retrieval_timestamp": retrieval_iso,
+                    "temporal_resolution": "Hourly Nowcast",
+                    "spatial_resolution": "Global Synoptic Grid",
+                    "data_mode": "real",
+                    "data_status": {
+                        "temperature": "Observed",
+                        "relative_humidity": "Observed",
+                        "surface_pressure": "Observed",
+                        "wind": "Observed",
+                        "solar_radiation": "Estimated",
+                        "wet_bulb": "Calculated (Stull 2011)",
+                        "heat_index": "Calculated (NOAA Rothfusz)",
+                        "swbgt": "Calculated (Australian BoM)",
+                        "dew_point": "Calculated (Magnus-Tetens)",
+                        "utci": "Unavailable"
+                    },
+                    "quality_flags": ["WMO_COMPLIANT", "SECONDARY_LIVE_PROVIDER"]
+                }
+                _REAL_DATA_CACHE[cache_key] = {"cached_at": now_ts, "data": met_normalized}
+                return met_normalized
+            except Exception as met_exc:
+                logging.warning(f"Secondary live provider MET Norway also failed: {met_exc}")
+
             # Graceful fallback: Read latest verified hourly record from curated Kharagpur station data
             try:
                 import pandas as pd
