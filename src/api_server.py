@@ -339,29 +339,34 @@ def get_campus_microclimate_current(
     Downscales real-time Kharagpur regional meteorological observations across all 24 campus buildings.
     Both modes use the exact same real synoptic telemetry as baseline; mode controls coefficient estimation.
     """
-    # Both modes consume the exact same live real synoptic meteorological baseline
-    real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
-    regional_t = float(real_obs["air_temperature_c"])
-    regional_rh = float(real_obs["relative_humidity_pct"])
-    regional_ws = float(real_obs["wind_speed_ms"])
-    regional_solar = float(real_obs["solar_radiation_wm2"])
+    try:
+        # Both modes consume the exact same live real synoptic meteorological baseline
+        real_obs = REAL_DATA_SERVICE.fetch_live_current_observation()
+        regional_t = float(real_obs["air_temperature_c"])
+        regional_rh = float(real_obs["relative_humidity_pct"])
+        regional_ws = float(real_obs["wind_speed_ms"])
+        regional_solar = float(real_obs["solar_radiation_wm2"])
 
-    coeff_mode = "ai" if mode.lower() in ["ai", "ai_coefficients", "ai_model"] else "literature"
+        coeff_mode = "ai" if mode.lower() in ["ai", "ai_coefficients", "ai_model"] else "literature"
 
-    eval_result = CAMPUS_MICROCLIMATE_ENGINE.evaluate_all_buildings(
-        regional_temperature_c=regional_t,
-        regional_relative_humidity_pct=regional_rh,
-        regional_wind_speed_ms=regional_ws,
-        regional_solar_radiation_wm2=regional_solar,
-        mode=coeff_mode
-    )
-    eval_result["data_mode"] = coeff_mode
-    eval_result["downscaling_mode"] = coeff_mode
-    eval_result["downscaling_mode_label"] = "AI-Predicted Dynamic Coefficients" if coeff_mode == "ai" else "Literature-Sourced Fixed Coefficients"
-    if "regional_reference" in eval_result:
-        eval_result["regional_reference"]["source"] = "Open-Meteo High-Res & IMD Synoptic Net (Live Telemetry)"
-        eval_result["regional_reference"]["observation_timestamp"] = real_obs["timestamp"]
-    return eval_result
+        eval_result = CAMPUS_MICROCLIMATE_ENGINE.evaluate_all_buildings(
+            regional_temperature_c=regional_t,
+            regional_relative_humidity_pct=regional_rh,
+            regional_wind_speed_ms=regional_ws,
+            regional_solar_radiation_wm2=regional_solar,
+            mode=coeff_mode
+        )
+        eval_result["data_mode"] = coeff_mode
+        eval_result["downscaling_mode"] = coeff_mode
+        eval_result["downscaling_mode_label"] = "AI-Predicted Dynamic Coefficients" if coeff_mode == "ai" else "Literature-Sourced Fixed Coefficients"
+        if "regional_reference" in eval_result:
+            eval_result["regional_reference"]["source"] = "Open-Meteo High-Res & IMD Synoptic Net (Live Telemetry)"
+            eval_result["regional_reference"]["observation_timestamp"] = real_obs["timestamp"]
+        return eval_result
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"Microclimate evaluation error: {str(e)}\n{tb}")
 
 @app.get("/api/campus/forecast")
 def get_campus_forecast_all_horizons():
